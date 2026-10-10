@@ -1,6 +1,6 @@
 # Goob operations demo
 
-From the repository root: `python3 -m operations.server`, then open http://127.0.0.1:8081.
+Build the combined frontend with `npm ci --prefix goob-dispatch` and `npm run build --prefix goob-dispatch`, then run `python3 -m operations.server` from the repository root. Open http://127.0.0.1:8081 and select **Work review**. The standalone operations UI is also available at /operations; if no frontend build exists, it is served at the root.
 
 Prepare the demo proposal, review the $240 original draft versus the $180 corrected draft, then confirm work and approve. The covered visit drops from one to zero, one spare returns to stock, and the immutable approved draft and audit record persist across reloads. Try the technician/dispatcher roles to see server-side approval rejection. Export downloads the demo records as JSON.
 
@@ -12,4 +12,4 @@ Implemented: persistent transactional approval, exact coverage checks, benefit c
 
 Simulated: fixed AI proposal, demo identity, seeded original invoice/material issue. Preview-only: return-visit blocker and uncertain migration row. Roadmap: real identity/branch scopes, comprehensive inventory/reservations, agreement lifecycle, communication drafts, migrations, integration adapters and dispatch synchronization.
 
-`goob-dispatch/` remains untouched and runs independently using its own README. See `docs/OPERATIONS-ARCHITECTURE.md` for module ownership, assumptions and phased delivery.
+The existing dispatch frontend now includes the operations Work review dialog. Map visits and the Morgan Ellis scenario retain separate fictional identities; approval does not change dispatch simulation state. See `docs/OPERATIONS-ARCHITECTURE.md` for module ownership, assumptions and phased delivery.

@@ -1,5 +1,7 @@
 import json
 import os
+import mimetypes
+from urllib.parse import urlsplit
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from operations.db import connect, seed
@@ -7,6 +9,7 @@ from operations.modules import crm, agreements, inventory, workflow
 from operations.modules.registry import REGISTRY, guard, configure
 
 ROOT = Path(__file__).parent
+FRONTEND = ROOT.parent/'goob-dispatch'/'dist'
 DATABASE = os.environ.get('GOOB_DEMO_DB', str(ROOT/'demo.sqlite3'))
 
 def snapshot(db, tenant, role):
@@ -33,12 +36,25 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.path in ['/', '/app.js', '/style.css']:
-            filename = {'/':'index.html','/app.js':'app.js','/style.css':'style.css'}[self.path]
+        path = urlsplit(self.path).path
+        legacy = {'/operations':'index.html', '/app.js':'app.js', '/style.css':'style.css'}
+        if path == '/' and not (FRONTEND/'index.html').is_file():
+            legacy['/'] = 'index.html'
+        if path in legacy:
+            filename = legacy[path]
             self.send_response(200)
             self.send_header('Content-Type',{'index.html':'text/html','app.js':'text/javascript','style.css':'text/css'}[filename])
             self.end_headers()
             self.wfile.write((ROOT/'static'/filename).read_bytes())
+            return
+        if not path.startswith('/api/') and (FRONTEND/'index.html').is_file():
+            target = (FRONTEND/(path.lstrip('/') or 'index.html')).resolve()
+            if not target.is_relative_to(FRONTEND.resolve()) or not target.is_file():
+                return self.reply(404,{'error':'Not found'})
+            self.send_response(200)
+            self.send_header('Content-Type',mimetypes.guess_type(target.name)[0] or 'application/octet-stream')
+            self.end_headers()
+            self.wfile.write(target.read_bytes())
             return
         if self.path not in ['/api/state','/api/export']:
             return self.reply(404,{'error':'Not found'})
@@ -82,5 +98,6 @@ if __name__ == '__main__':
     db = connect(DATABASE)
     seed(db)
     db.close()
-    print('Goob operations demo: http://127.0.0.1:8081', flush=True)
-    ThreadingHTTPServer(('127.0.0.1',8081),Handler).serve_forever()
+    port = int(os.environ.get('GOOB_DEMO_PORT', '8081'))
+    print(f'Goob workspace: http://127.0.0.1:{port}', flush=True)
+    ThreadingHTTPServer(('127.0.0.1',port),Handler).serve_forever()

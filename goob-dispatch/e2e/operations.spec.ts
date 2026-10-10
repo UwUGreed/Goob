@@ -1,0 +1,37 @@
+import {test,expect} from '@playwright/test';
+test('operations approval is permission guarded, persistent and leaves dispatch usable',async({page})=>{
+  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/');
+  await page.getByRole('button',{name:'Work review',exact:true}).click();
+  const dialog=page.getByRole('dialog',{name:'Work review',exact:true});
+  await expect(dialog.getByText('Morgan Ellis',{exact:true})).toBeVisible();
+  await expect(dialog.getByText('1 remaining visit',{exact:true})).toBeVisible();
+  await dialog.getByLabel('Operations demo role').selectOption('dispatcher');
+  await expect(dialog.getByRole('button',{name:'Prepare demo proposal'})).toBeDisabled();
+  await dialog.getByLabel('Operations demo role').selectOption('technician');
+  await dialog.getByRole('button',{name:'Prepare demo proposal'}).click();
+  await expect(dialog.getByText('$180.00',{exact:true})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:'Confirm work & approve draft'})).toBeDisabled();
+  await expect(dialog.getByText('1 remaining visit',{exact:true})).toBeVisible();
+  await dialog.getByLabel('Operations demo role').selectOption('owner');
+  await dialog.getByRole('button',{name:'Confirm work & approve draft'}).click();
+  await expect(dialog.getByRole('heading',{name:'Approved draft',exact:true})).toBeVisible();
+  await expect(dialog.getByText('0 remaining visits',{exact:true})).toBeVisible();
+  await expect(dialog.getByText('7 in stock',{exact:true})).toBeVisible();
+  await dialog.getByRole('button',{name:'Close dialog'}).click();
+  await expect(page.getByRole('heading',{name:'Dispatch.'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Assign visit',exact:true})).toBeEnabled();
+  await page.reload();
+  await page.getByRole('button',{name:'Work review',exact:true}).click();
+  await expect(dialog.getByRole('heading',{name:'Approved draft',exact:true})).toBeVisible();
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});
+test('unavailable API shows an actionable error while dispatch remains usable',async({page})=>{
+  await page.route('**/api/state',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Operations service unavailable'})}));
+  await page.goto('/');await page.getByRole('button',{name:'Work review',exact:true}).click();
+  await expect(page.getByRole('alert')).toContainText('Operations service unavailable');
+  await page.getByRole('button',{name:'Close dialog'}).click();
+  await expect(page.getByRole('button',{name:'Assign visit',exact:true})).toBeEnabled();
+});

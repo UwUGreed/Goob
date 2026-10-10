@@ -1,7 +1,7 @@
 # Operations vertical slice
 
 ## Before implementation: existing system and stack
-Latest origin/main f86662f contains the React/TypeScript dispatch simulation. The other local folders were empty scaffolding. Dispatch is protected and remains untouched. This separate operations demo uses Python standard-library HTTP, SQLite and plain browser JavaScript, requiring no credentials or package installs. A production frontend can adopt the existing React stack through the API.
+Latest origin/main f86662f contains the React/TypeScript dispatch simulation. The other local folders were empty scaffolding. The initial operations commit preserved dispatch unchanged. At the user's subsequent request, the existing React frontend now includes a Work review dialog backed by the Python standard-library HTTP/SQLite API. Dispatch simulation, map, routing and job records remain intact. The API serves the built React workspace; Vite proxies API calls during development. The original plain browser UI remains at /operations as a fallback. No credentials are required.
 
 ## Module/dependency map
 The explicit registry declares dependencies, permissions, navigation, settings, optional integrations and event names. CRM owns customer/equipment access. Agreements depends on CRM and owns eligibility/benefit ledger. Inventory owns stock and movements. Billing owns calculations and invoice snapshots. Workflow depends on CRM, agreements, inventory and billing, and orchestrates their interfaces transactionally; it owns jobs, proposals and approval history. Readiness consumes inventory. No domain module writes another module's tables. No async event delivery occurs; work.approved.v1 is a reserved future event contract, not a published integration.
@@ -16,7 +16,7 @@ One fictional tenant and branch. Role selection simulates identity; this is not 
 
 ## Phased delivery
 1. Customer → equipment/coverage → proposed work/materials → billing review → employee approval/history, with deterministic simulated AI.
-2. Read-only readiness blocker and uncertain migration preview; implement real reservations, technician qualification checks, approved imports and reversal commands next. Dispatch remains separate, with no synchronization.
+2. Read-only readiness blocker and uncertain migration preview; implement real reservations, technician qualification checks, approved imports and reversal commands next. Dispatch and operations share the frontend navigation; their fictional datasets remain explicitly separate with no synchronization.
 3. Agreement lifecycle, inventory receiving/transfers/reservations, communication drafts, outbox and adapter contracts.
 4. Real authentication, complete branch/trade authorization, isolated files/jobs/caches, provider integrations and production hardening.
 

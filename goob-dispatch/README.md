@@ -36,3 +36,11 @@ Chris can be dispatched to Maple Avenue independently. Jordan starts working at 
 - `src/App.tsx`: dashboard composition and validated local view preferences
 
 This demo uses no API keys, map-provider requests, real customer data, GPS, voice recognition, or live AI. The microphone button runs a labeled preset demo command. Simulation state resets on reload; view preferences are saved in local storage. Reduced-motion mode disables decorative transitions and shows travel in discrete position updates.
+
+## Integrated operations review
+
+The navigation now includes **Work review**, a React view connected to the operations API. It displays equipment coverage, proposals, returned materials, billing corrections, benefit ledger and employee approval history. The Morgan Ellis operations example has separate fictional job identities from the map visits; approvals do not change dispatch simulation state.
+
+For development, start `python3 -m operations.server` from the repository root, then run `npm run dev` here. The Vite server proxies `/api` to port 8081. For a single-address demo, build here and run the API; it serves this frontend at http://127.0.0.1:8081. If the API is unavailable, Work review shows an error with a retry button while dispatch continues working.
+
+`npm test` runs simulation unit tests. `npm run test:e2e` builds and starts an isolated combined app on port 8082, then runs dispatch and operations browser tests.
