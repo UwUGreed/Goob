@@ -1,0 +1,27 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+
+# Build outputs
+build/
+dist/
+out/
+coverage/
+
+# Local operations demo state
+__pycache__/
+*.pyc
+operations/*.sqlite3*
