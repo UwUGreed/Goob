@@ -1,0 +1,8 @@
+-c requirements.lock
+fastapi
+uvicorn
+sqlalchemy
+psycopg[binary]
+alembic
+PyJWT[crypto]
+httpx

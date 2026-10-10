@@ -2,6 +2,11 @@
 
 Prepared October 10, 2026. Proposal only; these capabilities are not implemented by this document.
 
+Implementation follow-up: the same branch now contains the new backend. See
+[implementation and setup](backend/README.md) and [deployment status](backend/DEPLOYMENT.md)
+for what is implemented, tested locally, and still dependent on provider configuration.
+The proposal below remains the original scope record.
+
 Branch: `codex/backend-award-plan`. Base: `c96ae88`.
 
 ## Scope and ownership
