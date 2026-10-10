@@ -1,0 +1,7 @@
+node_modules/
+.npm-cache/
+*.tsbuildinfo
+dist/
+.openai/*.tar.gz
+test-results/
+playwright-report/

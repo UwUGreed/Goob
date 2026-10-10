@@ -1,0 +1,10 @@
+export type Trade = 'Plumbing' | 'HVAC' | 'Electrical';
+export type Status = 'Available' | 'Assigned' | 'En route' | 'Arrived' | 'Working' | 'Completed' | 'Returning';
+export type JobStatus = 'Unassigned' | 'Assigned' | 'En route' | 'Arrived' | 'Working' | 'Completed';
+export type Point = { x: number; z: number };
+export type Technician = { id: string; name: string; trade: Trade; truck: string; initials: string; color: string; start: string };
+export type Job = { id: string; title: string; address: string; trade: Trade; customer: string; description: string; part: string; node: string; urgent?: boolean; time: string };
+export type TechState = { status: Status; node: string; jobId?: string; route: Point[]; progress: number; running: boolean; duration: number };
+export type Simulation = { technicians: Record<string, TechState>; jobs: Record<string, JobStatus>; speed: number };
+export type Preferences = { trade: Trade | 'All'; available: boolean; jobStatus: JobStatus | 'All'; names: boolean; routes: boolean; density: 'comfortable' | 'compact' };
+export type Selection = { type: 'job' | 'tech'; id: string } | null;

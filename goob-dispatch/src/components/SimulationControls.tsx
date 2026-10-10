@@ -1,0 +1,13 @@
+import { Play, Pause, RotateCcw, Navigation, Check } from 'lucide-react';
+import { technicians } from '../data';
+import type { Action } from '../simulation';
+import type { Simulation } from '../types';
+export function SimulationControls({state,techId,dispatch,reduced,onReset}:{state:Simulation;techId:string;dispatch:(a:Action)=>void;reduced:boolean;onReset:()=>void}) {
+  const tech=technicians.find(t=>t.id===techId)!;const t=state.technicians[techId];const canStart=['Assigned','En route','Returning'].includes(t.status);const percent=Math.round(t.progress*100);
+  const totalMinutes=Math.max(1,Math.round(t.duration*20/95)),eta=Math.ceil(totalMinutes*(1-t.progress));
+  return <div className="simulation-controls"><div className="sim-identity"><span className={`sim-icon ${t.running?'running':''}`}><Navigation size={17}/></span><div><strong>{tech.name.split(' ')[0]}’s journey <span>· {tech.truck}</span></strong><small>{t.status==='Available'?'Available · Assign a visit to start':t.status==='Assigned'?'Assigned · Ready when you are':t.status==='Returning'?(t.running?'Returning to depot':'Return paused'):t.status==='En route'?(t.running?'En route':'Travel paused'):t.status}{reduced?' · Reduced motion':''}</small></div></div>
+    <div className="journey-progress"><div><span>{canStart?`${eta} min simulated ETA`:t.status==='Arrived'||t.status==='Working'?'At the visit':t.status==='Completed'?'Visit completed':'Simulation ready'}</span><strong>{percent}%</strong></div><div className="progress-track"><div style={{width:`${percent}%`}}/></div></div>
+    <div className="playback-controls"><button className={`play-button ${t.running?'paused-style':''}`} disabled={!canStart} onClick={()=>dispatch({type:t.running?'pause':'start',techId})}>{t.running?<Pause size={15}/>:<Play size={15}/>} {t.running?'Pause':t.status==='En route'||t.status==='Returning'?'Resume':'Start'}</button><div className="speed-control" aria-label="Simulation speed">{[1,5,10].map(speed=><button key={speed} className={state.speed===speed?'active':''} aria-pressed={state.speed===speed} onClick={()=>dispatch({type:'speed',speed})}>{speed}×</button>)}</div><button className="reset-simulation" onClick={onReset} title="Reset the entire demo" aria-label="Reset demo"><RotateCcw size={16}/><span>Reset</span></button></div>
+    <p className="simulation-explanation">{t.running?<><span className="small-status-dot"/> Simulated movement · {state.speed}× speed</>:t.status==='Arrived'?<><Check size={12}/> Arrived. Start work in the details panel.</>:'Demo minutes are compressed. No real vehicles or GPS.'}</p>
+  </div>;
+}
