@@ -1,0 +1,39 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+
+# Build outputs
+build/
+dist/
+out/
+coverage/
+
+# Local operations demo state
+__pycache__/
+*.pyc
+operations/*.sqlite3*
+
+# Python environment and local backups
+.venv/
+backups/
+!.env.example
+
+# Deployment credentials and archives
+*.pem
+*.key
+*.dump
+*.tar.gz
+*.htpasswd

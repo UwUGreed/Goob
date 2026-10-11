@@ -1,0 +1,45 @@
+services:
+  migrate:
+    image: ${GOOB_IMAGE:-goob-backend:local}
+    profiles: ["tools"]
+    env_file: migration.env
+    command: ["alembic", "-c", "alembic-backend.ini", "upgrade", "head"]
+    volumes:
+      - ./tiger-ca.pem:/run/secrets/tiger-ca.pem:ro
+    restart: "no"
+  api:
+    image: ${GOOB_IMAGE:-goob-backend:local}
+    build:
+      context: ../..
+      dockerfile: deploy/backend/Dockerfile
+    env_file: runtime.env
+    environment:
+      GOOB_ENV: production
+    restart: unless-stopped
+    expose: ["8090"]
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - ./tiger-ca.pem:/run/secrets/tiger-ca.pem:ro
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  proxy:
+    image: caddy:2
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN to the backend-only hostname}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on: [api]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,23 @@
+[Unit]
+Description=Tiger staging website and operations API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=tiger
+Group=tiger
+WorkingDirectory=/var/www/tiger/current
+EnvironmentFile=/etc/tiger/tiger.env
+Environment=PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+ExecStart=/var/www/tiger/current/.venv/bin/python -m operations.server
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

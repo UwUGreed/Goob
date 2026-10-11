@@ -1,0 +1,41 @@
+name: Deploy Vultr staging
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: vultr-staging
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment: staging
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Transfer exact commit and deploy
+        env:
+          VULTR_HOST: ${{ secrets.VULTR_HOST }}
+          VULTR_USER: ${{ secrets.VULTR_USER }}
+          VULTR_SSH_KEY: ${{ secrets.VULTR_SSH_KEY }}
+          VULTR_KNOWN_HOSTS: ${{ secrets.VULTR_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$VULTR_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          [[ "$VULTR_USER" == tiger ]]
+          umask 077
+          key="$RUNNER_TEMP/tiger-key"
+          hosts="$RUNNER_TEMP/tiger-hosts"
+          trap 'rm -f "$key" "$hosts"' EXIT
+          printf '%s\n' "$VULTR_SSH_KEY" > "$key"
+          printf '%s\n' "$VULTR_KNOWN_HOSTS" > "$hosts"
+          opts=(-i "$key" -o BatchMode=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$hosts" -o ConnectTimeout=15)
+          git archive --format=tar.gz --output="$RUNNER_TEMP/$GITHUB_SHA.tar.gz" "$GITHUB_SHA"
+          scp "${opts[@]}" "$RUNNER_TEMP/$GITHUB_SHA.tar.gz" "$VULTR_USER@$VULTR_HOST:/var/www/tiger/incoming/$GITHUB_SHA.tar.gz"
+          ssh "${opts[@]}" "$VULTR_USER@$VULTR_HOST" "bash -s -- '$GITHUB_SHA'" < scripts/deploy.sh

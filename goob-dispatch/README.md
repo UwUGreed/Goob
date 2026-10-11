@@ -110,3 +110,7 @@ All pages share the dispatch simulation records. Local preview is visibly a demo
 Truck parts are reserved for approved active jobs, consumed once on completion, and cannot be reduced below reservations. Warehouse stock does not count as truck-ready stock. Use separate location records and stock adjustments to record stock movement. Custom service addresses require choosing a clearly labelled existing demo route destination; arbitrary addresses are not geocoded. Fixture contact details are intentionally left unknown.
 
 Checks: npm run build (TypeScript, Vite, Worker), npm test, and npx playwright test e2e/dispatch.spec.ts e2e/operations.spec.ts. No lint script is configured.
+
+## Backend work review
+
+Work review remains available from the workspace menu and connects to the existing operations backend, with separate fictional job identities. Run the operations server on port 8081 for this view. Vite proxies its API endpoints while the Dispatch adapter serves its own endpoints. Browser tests require GOOB_E2E_BASE_URL for an explicitly selected isolated workspace and optionally PLAYWRIGHT_CHROMIUM_EXECUTABLE.

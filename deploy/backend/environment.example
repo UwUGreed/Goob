@@ -1,0 +1,13 @@
+# Copy to runtime.env; never commit the populated file.
+GOOB_ENV=production
+DATABASE_URL=postgresql+psycopg://APP_ROLE:PASSWORD@TIGER_HOST:PORT/DATABASE?sslmode=verify-full&sslrootcert=/run/secrets/tiger-ca.pem
+# Native postgresql:// URLs from the existing website configuration also work.
+# Optional GOOB_API_DATABASE_URL overrides DATABASE_URL for v1 only.
+OIDC_ISSUER=https://YOUR_IDENTITY_PROVIDER/
+OIDC_AUDIENCE=YOUR_API_AUDIENCE
+OIDC_JWKS_URL=https://YOUR_IDENTITY_PROVIDER/.well-known/jwks.json
+ALLOWED_ORIGINS=https://YOUR_EXISTING_FRONTEND
+GEMINI_API_KEY=
+GEMINI_MODEL=
+GEMINI_HOURLY_REQUEST_LIMIT=30
+# API_DOMAIN and GOOB_IMAGE are deployment shell variables consumed by Compose.

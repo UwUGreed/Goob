@@ -1,0 +1,15 @@
+**
+!operations/
+!operations/api_v1/**
+!operations/domain/**
+!operations/persistence/**
+!operations/integrations/**
+!operations/migrations/**
+!alembic-backend.ini
+!scripts/
+!scripts/bootstrap_backend.py
+!deploy/
+!deploy/backend/
+!deploy/backend/requirements.txt
+!deploy/backend/requirements.lock
+**/__pycache__/**
