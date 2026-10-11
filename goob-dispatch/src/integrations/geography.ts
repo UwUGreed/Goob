@@ -23,3 +23,6 @@ export function decodePolyline(encoded:string):GeoPoint[]{
   const read=()=>{let value=0,shift=0,byte:number;do{if(index>=encoded.length||shift>30)throw new Error('Invalid route polyline');byte=encoded.charCodeAt(index++)-63;if(byte<0||byte>63)throw new Error('Invalid route polyline');value|=(byte&31)<<shift;shift+=5;}while(byte>=32);return(value&1)?~(value>>1):value>>1;};
   while(index<encoded.length){lat+=read();lng+=read();const point={lat:lat/1e5,lng:lng/1e5};if(Math.abs(point.lat)>90||Math.abs(point.lng)>180)throw new Error('Invalid route coordinates');result.push(point);if(result.length>20000)throw new Error('Route is too complex');}return result;
 }
+
+// Missing catalog locations must never be interpreted as map coordinates.
+export function validMapPoint(point:GeoPoint|undefined):point is GeoPoint {return !!point&&Number.isFinite(point.lat)&&Number.isFinite(point.lng)&&Math.abs(point.lat)<=90&&Math.abs(point.lng)<=180;}

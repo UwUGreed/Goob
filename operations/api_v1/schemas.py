@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
 
 Trade = Literal["HVAC", "Plumbing", "Electrical"]
 
@@ -64,6 +64,32 @@ class SKU(Strict):
     unit: Literal["each"] = "each"
     cost_cents: int = Field(ge=0, default=0)
     price_cents: int = Field(ge=0, default=0)
+    image_url: str = Field(default="", max_length=2000)
+    image_alt: str = Field(default="", max_length=250)
+    image_attribution: str = Field(default="", max_length=1000)
+    image_source: str = Field(default="", max_length=2000)
+    image_illustrative: bool = True
+
+    @field_validator("image_url", "image_source")
+    @classmethod
+    def safe_image_url(cls, value):
+        from urllib.parse import urlsplit
+        import ipaddress
+        if not value: return value
+        if __import__("re").fullmatch(r"/inventory-images/[A-Za-z0-9_-]+\.(webp|png|jpg|jpeg)", value):
+            return value
+        url=urlsplit(value)
+        if url.scheme!="https" or not url.hostname or url.username or url.password or url.fragment or url.port not in (None,443):
+            raise ValueError("Use a public HTTPS image URL.")
+        host=url.hostname.lower().rstrip(".")
+        if "." not in host or host.endswith((".local",".internal",".localhost")):
+            raise ValueError("Use a public HTTPS image URL.")
+        try:
+            address=ipaddress.ip_address(host)
+            if not address.is_global: raise ValueError("Private addresses are not supported.")
+        except ValueError as e:
+            if str(e)=="Private addresses are not supported.": raise
+        return value
 
 
 class Location(Strict):

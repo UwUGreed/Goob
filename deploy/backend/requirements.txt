@@ -7,3 +7,4 @@ alembic
 PyJWT[crypto]
 httpx
 python-dotenv
+reportlab

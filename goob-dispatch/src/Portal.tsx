@@ -3,7 +3,7 @@ import App from './App';
 type Account={identifier:string;workspace:string;role:string;demo:boolean};
 export function safeReturn(value:string|null){
   if(!value||value.includes('\\'))return '/overview';
-  try{const u=new URL(value,window.location.origin);return u.origin===window.location.origin&&/^\/(overview|dispatch|customers|jobs|inventory|memberships)(\/[^/]+)?$/.test(u.pathname)?u.pathname+u.search:'/overview';}catch{return '/overview';}
+  try{const u=new URL(value,window.location.origin);return u.origin===window.location.origin&&/^\/(overview|dispatch|customers|jobs|inventory|memberships|invoices)(\/[^/]+)?$/.test(u.pathname)?u.pathname+u.search:'/overview';}catch{return '/overview';}
 }
 export default function Portal(){
  const [route,setRoute]=useState(window.location.pathname+window.location.search),[user,setUser]=useState<Account|null>(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[identifier,setIdentifier]=useState(''),[password,setPassword]=useState(''),[visible,setVisible]=useState(false);

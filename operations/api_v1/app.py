@@ -3,10 +3,10 @@ import os
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, Header, Query, Request
+from fastapi import Body, Depends, FastAPI, Header, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer
 from pydantic import Field
 from sqlalchemy import select
@@ -61,6 +61,9 @@ from operations.persistence.models import (
     uid,
 )
 from operations.persistence.readiness import check_schema
+from operations.api_v1.invoice_schemas import GenerateInvoice, InvoiceDraft, InvoiceExtraction, SaveInvoice
+from operations.domain import invoice_editor
+from operations.integrations.invoice_gemini import InvoiceGemini
 
 
 class Reason(Strict):
@@ -108,13 +111,21 @@ class ExistingOpportunity(Strict):
     description: str = Field(min_length=1, max_length=1000)
 
 
-def create_app(engine=None, verifier=None, gemini=None):
+def create_app(engine=None, verifier=None, gemini=None, invoice_gemini=None):
+    # Load server credentials at startup, including local development overrides.
+    # Generation must work before a browser requests /api/config.
+    from pathlib import Path
+    from dotenv import load_dotenv
+    root = Path(__file__).resolve().parents[2]
+    load_dotenv(root / ".env", override=False)
+    load_dotenv(root / "goob-dispatch" / ".env.local", override=False)
     engine = engine if engine is not None else engine_for()
     def unavailable_verifier(token):
         raise Problem("OIDC bearer authentication is not configured.", 401)
     verify = verifier or (OIDCVerifier() if os.environ.get("OIDC_ISSUER") else unavailable_verifier)
     factory = sessions(engine)
     provider = gemini or Gemini()
+    invoice_provider = invoice_gemini or InvoiceGemini()
     app = FastAPI(
         title="Goob Operations API",
         version="1.0.0",
@@ -239,6 +250,97 @@ def create_app(engine=None, verifier=None, gemini=None):
             return JSONResponse(status_code=503, content={"status": "unready"})
 
     prefix = "/api/v1"
+
+    @app.get(prefix + "/views/{page}")
+    def read_view(page: str, db=Depends(session), user=Depends(actor)):
+        from operations.domain import views
+        return views.read(db, user, page)
+
+    @app.post(prefix + "/views/{page}")
+    def save_view(page: str, body: dict = Body(...), db=Depends(session), user=Depends(actor)):
+        from operations.domain import views
+        result = views.save(db, user, page, body)
+        db.commit()
+        return result
+
+    @app.get(prefix + "/invoices/configuration")
+    def invoice_configuration(db=Depends(session), user=Depends(actor)):
+        check(db, user, "billing")
+        return invoice_editor.settings(db, user)
+
+    @app.get(prefix + "/invoices/options")
+    def invoice_options(db=Depends(session), user=Depends(actor)):
+        check(db, user, "billing")
+        rows = db.scalars(select(Record).where(Record.tenant_id==user.tenant, Record.branch_id.in_(user.branches),
+            Record.archived.is_(False), Record.kind.in_(["customers", "properties", "equipment", "jobs", "skus"])).order_by(Record.name)).all()
+        return {kind: [dump(r) for r in rows if r.kind == kind] for kind in ("customers", "properties", "equipment", "jobs", "skus")}
+
+    @app.post(prefix + "/invoices/generate")
+    def generate_invoice(body: GenerateInvoice, db=Depends(session), user=Depends(actor)):
+        check(db, user, "billing")
+        p = body.model_dump(mode="json")
+        _, site, _, _ = invoice_editor.selection(db, user, p, "propose")
+        # Do not send customer names, addresses, contacts, history or account identifiers.
+        from sqlalchemy import func, text
+        db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:tenant, 0))"), {"tenant": user.tenant})
+        attempts = db.scalar(select(func.count()).select_from(Event).where(Event.tenant_id==user.tenant, Event.kind=="ai.attempt", Event.created_at>=now()-timedelta(hours=1)))
+        if attempts >= int(os.environ.get("GEMINI_HOURLY_REQUEST_LIMIT", "30")):
+            raise Problem("Company AI request allowance exhausted for this hour.", 429)
+        event(db, user, site.branch_id, "ai.attempt", site.id, {"purpose": "invoice_generation"})
+        db.commit()
+        result, metadata = invoice_provider.generate(p["source_text"], {"trade": p["trade"], "service": p["service"], "currency": "USD"})
+        invoice_editor.selection(db, user, p, "propose")
+        try:
+            result = InvoiceExtraction.model_validate(result).model_dump()
+        except ValueError:
+            raise Problem("Gemini returned an invalid invoice response. Use manual entry.", 502) from None
+        result = invoice_editor.generated_evidence(result, p["source_text"])
+        return {"extraction": result, "metadata": metadata}
+
+    @app.post(prefix + "/invoices/preview")
+    def invoice_preview(body: InvoiceDraft, db=Depends(session), user=Depends(actor)):
+        check(db, user, "billing")
+        return invoice_editor.preview(db, user, body.model_dump(mode="json"))
+
+    @app.post(prefix + "/invoices/save")
+    def save_invoice(body: SaveInvoice, idempotency_key: str = Header(default=""), db=Depends(session), user=Depends(actor)):
+        check(db, user, "billing")
+        p = body.model_dump(mode="json")
+        # Validate permissions even on an idempotent replay.
+        invoice_editor.selection(db, user, p["draft"], "approve" if p["finalize"] else "write")
+        existing = db.get(Invoice, (user.tenant, p["id"]))
+        if existing:
+            user.allow(existing.branch_id, "approve" if p["finalize"] else "write")
+        return mutate(db, user, idempotency_key, "invoice.save", p, lambda: invoice_editor.save(db, user, p))
+
+    @app.get(prefix + "/invoices")
+    def list_invoices(q: str = Query(default="", max_length=100), customer_id: str | None = None, job_id: str | None = None,
+                      db=Depends(session), user=Depends(actor)):
+        check(db, user, "billing")
+        query = select(Invoice).where(Invoice.tenant_id==user.tenant, Invoice.branch_id.in_(user.branches))
+        if customer_id:
+            record(db, user, customer_id, "customers")
+            query = query.where(Invoice.customer_id==customer_id)
+        if job_id:
+            record(db, user, job_id, "jobs")
+            query = query.where(Invoice.job_id==job_id)
+        if q:
+            query = query.where(Invoice.number.icontains(q, autoescape=True) | Invoice.snapshot["customer"]["name"].astext.icontains(q, autoescape=True))
+        return [dump(r) for r in db.scalars(query.order_by(Invoice.created_at.desc()).limit(100))]
+
+    @app.get(prefix + "/invoices/{identifier}")
+    def read_invoice(identifier: str, db=Depends(session), user=Depends(actor)):
+        check(db, user, "billing")
+        return dump(get(db, user, Invoice, identifier))
+
+    @app.get(prefix + "/invoices/{identifier}/pdf")
+    def invoice_pdf(identifier: str, db=Depends(session), user=Depends(actor)):
+        check(db, user, "billing")
+        row = get(db, user, Invoice, identifier)
+        if row.snapshot.get("schema_version") != 2:
+            raise Problem("Use the accounting export for legacy work-review invoices.", 422)
+        from operations.integrations.invoice_pdf import render
+        return Response(render(row), media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{row.number}.pdf"'})
 
     @app.get(prefix + "/me")
     def me(user=Depends(actor)):
@@ -441,6 +543,11 @@ def create_app(engine=None, verifier=None, gemini=None):
     def accounting_export(identifier: str, db=Depends(session), user=Depends(actor)):
         check(db, user, "billing")
         invoice = get(db, user, Invoice, identifier, "approve")
+        if invoice.proposal_id is None:
+            if invoice.status != "finalized":
+                raise Problem("Finalize the reviewed invoice before accounting export.")
+            return {"schema_version": 2, "external_source_id": "goob:"+invoice.id, "job_id": invoice.job_id,
+                    "state": "finalized", "snapshot": invoice.snapshot, "sync_status": "not_posted", "tax_review_required": False}
         approval = get(db, user, Proposal, invoice.proposal_id)
         if approval.state != "approved":
             raise Problem(

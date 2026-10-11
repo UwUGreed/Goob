@@ -1,3 +1,4 @@
 -r requirements.txt
 pytest
 ruff
+pymupdf==1.28.2

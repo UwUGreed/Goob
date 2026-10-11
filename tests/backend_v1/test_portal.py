@@ -47,6 +47,10 @@ def test_cloud_portal_login_crud_assignment_stock_and_signout(api, engine):
     change({"type":"stock","item":item|{"quantity":-1}},422)
     job_id="job-"+str(uuid4())
     state=change({"type":"create","job":{"id":job_id,"customerId":customer["id"],"title":"Sink leak","description":"Database verification","address":"124 Oak Lane","trade":"Plumbing","part":"Valve","node":"1-0","time":"Today","urgent":True}})
+    selected = client.get("/api/dispatch/jobs/"+job_id)
+    assert selected.status_code == 200
+    assert selected.json()["job"]["id"] == job_id
+    assert client.get("/api/dispatch/jobs/not-a-job").status_code == 404
     start=int(datetime(2026,10,10,10,45,tzinfo=timezone.utc).timestamp()*1000)
     state=change({"type":"assign","jobId":job_id,"techId":"maya","slot":{"date":"2026-10-10","start":start,"end":start+3600000,"travelStart":start-600000}})
     assert state["jobs"][job_id]=="Assigned"

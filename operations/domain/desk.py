@@ -51,7 +51,7 @@ def snapshot(db, actor):
             bookings[j.id] = {"techId": v.technician_id, "date": v.date, "start": v.start, "end": v.end, "travelStart": v.travel_start}
     colors = {"Plumbing": "#3485db", "HVAC": "#319b72", "Electrical": "#e1a43d"}
     roster = [{"id": t.id, "name": t.name, "trade": t.trade, "truck": name(t.location_id), "branchId": t.branch_id, "locationId": t.location_id, "initials": "".join(p[0] for p in t.name.split())[:2], "color": colors[t.trade], "start": t.node} for t in techs]
-    stock = [{"id": b.id, "skuId": b.sku_id, "locationId": b.location_id, "part": name(b.sku_id), "sku": catalog[b.sku_id].data.get("barcode") or "SKU not recorded", "trade": catalog[b.sku_id].data.get("trade", "Plumbing"), "truck": "Warehouse" if catalog[b.location_id].data["location_type"] == "warehouse" else name(b.location_id), "quantity": b.on_hand, "reservedQuantity":b.reserved, "threshold": b.minimum, "branchId": b.branch_id} for b in scoped(db, actor, Balance)]
+    stock = [{"id": b.id, "skuId": b.sku_id, "locationId": b.location_id, "part": name(b.sku_id), "sku": catalog[b.sku_id].data.get("barcode") or "SKU not recorded", "trade": catalog[b.sku_id].data.get("trade", "Plumbing"), "truck": "Warehouse" if catalog[b.location_id].data["location_type"] == "warehouse" else name(b.location_id), "quantity": b.on_hand, "reservedQuantity":b.reserved, "threshold": b.minimum, "branchId": b.branch_id, "skuRevision": catalog[b.sku_id].revision, **{k:catalog[b.sku_id].data.get(k) for k in ("image_url","image_alt","image_attribution","image_source","image_illustrative")}} for b in scoped(db, actor, Balance)]
     reservations = [{"id":r.id,"jobId": r.job_id, "part": name(r.sku_id), "truck": name(r.location_id), "quantity": r.quantity} for r in scoped(db, actor, Reservation) if r.state == "active"]
     movements = [{"id":m.id,"part":name(m.sku_id),"location":name(m.location_id),"locationId":m.location_id,"jobId":m.job_id,"kind":m.kind,"quantity":m.quantity,"delta":m.delta,"reason":m.reason,"date":m.created_at.isoformat()} for m in sorted(scoped(db,actor,Movement),key=lambda m:m.created_at,reverse=True)]
     locations = [{"id":r.id,"name":r.name,"type":r.data["location_type"]} for r in rows if r.kind=="locations"]
@@ -99,6 +99,15 @@ def run(db, actor, action):
             crm.patch(db,actor,"properties",row.id,{"expected_revision":row.revision,"name":text(p,"name",100),"data":{"address":text(p,"address",200)}})
         else:
             create(db,actor,"properties",c.branch_id,text(p,"name",100),{"address":text(p,"address",200)},parent_id=c.id)
+    elif kind == "image":
+        p=action.get("values",{})
+        sku=record(db,actor,p.get("sku_id"),"skus","write",True)
+        if p.get("expected_revision") != sku.revision:
+            raise Problem("Item changed. Refresh before replacing its image.")
+        fields={k:p.get(k, "" if k!="image_illustrative" else True) for k in ("image_url","image_alt","image_attribution","image_source","image_illustrative")}
+        if fields["image_url"] and (not isinstance(fields["image_alt"],str) or not fields["image_alt"].strip()):
+            raise Problem("Describe the image for accessibility.",422)
+        crm.patch(db,actor,"skus",sku.id,{"expected_revision":sku.revision,"data":sku.data|fields})
     elif kind == "movement":
         from operations.api_v1.schemas import InventoryCommand
         from pydantic import ValidationError

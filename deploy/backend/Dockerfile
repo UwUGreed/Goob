@@ -1,6 +1,15 @@
+FROM node:22-bookworm-slim AS invoice_sdk
+WORKDIR /invoice
+COPY goob-dispatch/package.json goob-dispatch/package-lock.json ./
+RUN npm ci --omit=dev
+
 FROM python:3.14-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 && rm -rf /var/lib/apt/lists/*
+COPY --from=invoice_sdk /usr/local/bin/node /usr/local/bin/node
+COPY --from=invoice_sdk /invoice/node_modules /app/goob-dispatch/node_modules
+COPY goob-dispatch/scripts/generate-invoice.mjs /app/goob-dispatch/scripts/generate-invoice.mjs
 COPY deploy/backend/requirements.txt deploy/backend/requirements.lock /tmp/requirements/
 RUN pip install --no-cache-dir -r /tmp/requirements/requirements.txt && useradd --uid 10001 --create-home goob
 COPY operations/api_v1 /app/operations/api_v1

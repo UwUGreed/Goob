@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader';
 import { Navigation, Plus, Minus, LocateFixed, Route } from 'lucide-react';
 import { depot, jobs, technicians, tradeColors } from '../data';
-import { columbia, geoPosition, meters, realStops, type GeoPoint } from '../integrations/geography';
+import { validMapPoint, columbia, geoPosition, meters, realStops, type GeoPoint } from '../integrations/geography';
 import { layoutLabels, overlaps, type ScreenRect } from '../mapLayout';
 import type { MotionSource } from '../simulation';
 import type { IntegrationConfig } from '../integrations/api';
@@ -27,11 +27,12 @@ const quietStreets:google.maps.MapTypeStyle[]=[
 ];
 const vehicleGlyph='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><path d="M3 7h13v13H3zM16 11h5l4 5v4h-9z" fill="white"/><path d="M18 12h3l2 4h-5z" fill="#483349"/><circle cx="8" cy="21" r="3" fill="#483349" stroke="white"/><circle cx="21" cy="21" r="3" fill="#483349" stroke="white"/></svg>');
 let configuredKey='';
-function selectedTech(p:Props){const technicians=teamRecords(p.state);return p.selection?.type==='tech'?(technicians.find(t=>t.id===p.selection!.id)??technicians[0]):technicians.find(t=>p.state.technicians[t.id].jobId===p.selection?.id)??technicians.find(t=>t.trade===allJobs(p.state).find(j=>j.id===p.selection?.id)?.trade)??technicians[0];}
+function selectedTech(p:Props){const technicians=teamRecords(p.state);return p.selection?.type==='tech'?(technicians.find(t=>t.id===p.selection!.id)??technicians[0]):technicians.find(t=>p.state.technicians[t.id]?.jobId===p.selection?.id)??technicians.find(t=>t.trade===allJobs(p.state).find(j=>j.id===p.selection?.id)?.trade)??technicians[0];}
 function position(p:Props,id:string){const t=p.state.technicians[id],progress=t.replay?.progress??t.progress;return t.driving?geoPosition(t.driving.coordinates,p.reduced?Math.floor(progress*15)/15:progress):{...realStops[t.node],heading:0};}
 function tradeIcon(trade:Trade){return new URL(`/trade-${trade.toLowerCase()}.svg`,location.origin).href;}
 export function GoogleDispatchMap(props:Props){
  const technicians=teamRecords(props.state),definitions=definitionsFor(props.state);
+ const definitionKey=definitions.map(d=>d.id+'/'+d.node).join('|');
   const host2=useRef<HTMLDivElement>(null),host3=useRef<HTMLDivElement>(null),map2=useRef<google.maps.Map|null>(null),map3=useRef<google.maps.maps3d.Map3DElement|null>(null),overlay=useRef<google.maps.OverlayView|null>(null),current=useRef(props);current.current=props;
   const markers2=useRef(new Map<string,Marker2>()),markers3=useRef(new Map<string,Marker3>()),lines2=useRef<google.maps.Polyline[]>([]),lines3=useRef<google.maps.maps3d.Polyline3DElement[]>([]);
   const [epoch,setEpoch]=useState(0),[loaded2,setLoaded2]=useState(false),[loaded3,setLoaded3]=useState(false),[loading,setLoading]=useState('Loading Google Maps…');
@@ -56,7 +57,7 @@ export function GoogleDispatchMap(props:Props){
         if(!w||!h)return;
         const occupied:ScreenRect[]=[],details:{id:string;anchor:{x:number;y:number};width:number;height:number;priority:number;above:boolean}[]=[];
         [...markers2.current].sort((a,b)=>Number(b[1].selected)-Number(a[1].selected)).forEach(([id,m])=>{
-          const point=projection.fromLatLngToContainerPixel(new google.maps.LatLng(m.point))!,size=m.tech?38:32,rect={x:point.x-size/2,y:point.y-size/2,width:size,height:size};
+          if(!validMapPoint(m.point)){m.button.style.display='none';m.tooltip.style.visibility='hidden';return;}const point=projection.fromLatLngToContainerPixel(new google.maps.LatLng(m.point))!,size=m.tech?38:32,rect={x:point.x-size/2,y:point.y-size/2,width:size,height:size};
           const visible=m.visible&&(m.selected||!occupied.some(r=>overlaps(r,rect,3)));
           m.button.style.display=visible?'grid':'none';m.tooltip.style.visibility='hidden';if(!visible)return;occupied.push(rect);
           m.button.style.left=`${point.x}px`;m.button.style.top=`${point.y}px`;m.button.style.zIndex=m.selected?'20':'10';
@@ -69,11 +70,11 @@ export function GoogleDispatchMap(props:Props){
   }
   async function build3(){
     const {Marker3DInteractiveElement}=await importLibrary('maps3d'),{PinElement}=await importLibrary('marker');if(!map3.current)return;
-    for(const d of definitions){const marker=new Marker3DInteractiveElement({position:{...realStops[d.node],altitude:d.tech?7:2},altitudeMode:'RELATIVE_TO_GROUND',title:`Select ${d.name}, ${d.trade}`,drawsWhenOccluded:true,sizePreserved:true});
+    for(const d of definitions){if(!validMapPoint(realStops[d.node]))continue;const marker=new Marker3DInteractiveElement({position:{...realStops[d.node],altitude:d.tech?7:2},altitudeMode:'RELATIVE_TO_GROUND',title:`Select ${d.name}, ${d.trade}`,drawsWhenOccluded:true,sizePreserved:true});
       const pin=new PinElement({background:tradeColors[d.trade],borderColor:'#fffdf5',glyphSrc:d.tech?vehicleGlyph:tradeIcon(d.trade),scale:1});marker.append(pin);marker.addEventListener('gmp-click',()=>choose(d.id,d.tech));
       marker.addEventListener('mouseenter',()=>{if(!current.current.selection)marker.label=`${d.name} · ${d.trade}`;});marker.addEventListener('mouseleave',()=>{if(current.current.selection?.id!==d.id)marker.label=null;});map3.current!.append(marker);markers3.current.set(d.id,{marker,pin});}
   }
-  function pointsForFit(all=false):GeoPoint[]{const p={...current.current,state:current.current.motion.getState()},t=selectedTech(p),ts=p.state.technicians[t.id],job=allJobs(p.state).find(j=>j.id===(p.selection?.type==='job'?p.selection.id:ts.jobId));const points:GeoPoint[]=all||!p.selection?Object.values(realStops):[];if(ts.driving)points.push(...ts.driving.coordinates);else if(p.state.preview?.route)points.push(...p.state.preview.route.coordinates);points.push(position(p,t.id));if(ts.status==='Returning')points.push(realStops[depot]);else if(job&&realStops[job.node])points.push(realStops[job.node]);if(points.length===1)points.push(...Object.values(realStops));return points;}
+  function pointsForFit(all=false):GeoPoint[]{const p={...current.current,state:current.current.motion.getState()},t=selectedTech(p),ts=p.state.technicians[t.id],job=allJobs(p.state).find(j=>j.id===(p.selection?.type==='job'?p.selection.id:ts.jobId));const points:GeoPoint[]=all||!p.selection?Object.values(realStops):[];if(ts.driving)points.push(...ts.driving.coordinates);else if(p.state.preview?.route)points.push(...p.state.preview.route.coordinates);points.push(position(p,t.id));if(ts.status==='Returning')points.push(realStops[depot]);else if(job&&realStops[job.node])points.push(realStops[job.node]);if(points.length===1)points.push(...Object.values(realStops));return points.filter(validMapPoint);}
   function fit(all=false){
     const p=current.current,points=pointsForFit(all);if(!points.length||!host2.current||!host3.current)return;const box=new google.maps.LatLngBounds();points.forEach(point=>box.extend(point));
     if(p.mode==='2D'||!map3.current){map2.current?.fitBounds(box,{top:62,left:50,right:85,bottom:65});return;}
@@ -81,13 +82,13 @@ export function GoogleDispatchMap(props:Props){
     map3.current.stopCameraAnimation();map3.current.flyCameraTo({endCamera:{center:{...center,altitude:0},altitudeMode:'RELATIVE_TO_GROUND',range:Math.max(450,1.2*radius/Math.sin(Math.min(v,horizontal))),tilt:58,heading:0},durationMillis:p.reduced?0:450});
   }fitRef.current=fit;
   useEffect(()=>{
-    let disposed=false;const original=(window as Window & {gm_authFailure?:()=>void}).gm_authFailure;
+    setLoaded2(false);setLoaded3(false);let disposed=false;const original=(window as Window & {gm_authFailure?:()=>void}).gm_authFailure;
     (window as Window & {gm_authFailure?:()=>void}).gm_authFailure=()=>{if(!disposed)current.current.onMapError('Google Maps could not authorize this site. Check the browser key, referrer restrictions, API enablement, and billing.');};
     if(!configuredKey){setOptions({key:props.config.browserKey,v:'weekly',region:'US',language:'en',authReferrerPolicy:'origin'});configuredKey=props.config.browserKey;}
     const timeout=window.setTimeout(()=>{if(!disposed&&!map2.current)current.current.onMapError('Google Maps did not load. Check connectivity and browser-key configuration.');},20000);
     importLibrary('maps').then(({Map,RenderingType})=>{if(disposed)return;map2.current=new Map(host2.current!,{center:columbia,zoom:16,tilt:0,heading:0,...(props.config.mapId?{mapId:props.config.mapId,renderingType:RenderingType.VECTOR}:{renderingType:RenderingType.RASTER,styles:quietStreets}),disableDefaultUI:true,gestureHandling:'greedy',clickableIcons:false});build2();clearTimeout(timeout);setLoaded2(true);setLoading('');setEpoch(e=>e+1);fitRef.current();}).catch(()=>{if(!disposed)current.current.onMapError('Google Maps could not load. Check network access and the restricted browser key.');});
     return()=>{disposed=true;clearTimeout(timeout);(window as Window & {gm_authFailure?:()=>void}).gm_authFailure=original;overlay.current?.setMap(null);overlay.current=null;markers2.current.clear();lines2.current.forEach(l=>l.setMap(null));if(map2.current)google.maps.event.clearInstanceListeners(map2.current);map2.current=null;markers3.current.forEach(({marker})=>marker.remove());markers3.current.clear();lines3.current.forEach(l=>l.remove());map3.current?.stopCameraAnimation();map3.current?.remove();map3.current=null;host2.current?.replaceChildren();};
-  },[]);
+  },[definitionKey]);
   useEffect(()=>{
     if(props.mode!=='3D'||!loaded2||map3.current)return;
     let canceled=false,timer=0;setLoading('Loading photorealistic 3D…');
@@ -103,9 +104,9 @@ export function GoogleDispatchMap(props:Props){
   useEffect(()=>{
     if(!loaded2)return;const p=props,active=selectedTech(p),activeState=p.state.technicians[active.id],job=allJobs(p.state).find(j=>j.id===(p.selection?.type==='job'?p.selection.id:activeState.jobId)),destination=activeState.status==='Returning'?'depot':job?.id;
     const destinationPoint=destination==='depot'?realStops[depot]:job?realStops[job.node]:undefined,colocated=!!destinationPoint&&meters(position(p,active.id),destinationPoint)<12;
-    for(const base of definitions){const custom=base.id==='custom-destination',d=custom&&job?.id.startsWith('job-')?{...base,id:base.id,trade:job.trade,name:job.address,node:job.node}:base;const ts=d.tech?p.state.technicians[d.id]:undefined,selected=(custom&&!!job?.id.startsWith('job-'))||(p.selection?.id===d.id&&activeState.status!=='Returning')||!!p.selection&&(d.id===active.id||d.id===destination);
-      let visible=(!custom||!!job?.id.startsWith('job-'))&&(p.preferences.trade==='All'||p.preferences.trade===d.trade)&&(!ts||!p.preferences.available||['Available','Completed'].includes(ts.status))&&(!jobs.some(j=>j.id===d.id)||p.preferences.jobStatus==='All'||p.state.jobs[d.id]===p.preferences.jobStatus)&&(d.id!=='willow'||p.state.jobs.oak==='Completed')||selected||p.follow===d.id||d.id==='depot';if(colocated&&(d.id===destination||custom))visible=false;
-      const point=ts?position(p,d.id):realStops[d.node],label=d.id==='depot'?'Goob Depot':`${ts&&!p.preferences.names?`Truck ${technicians.find(t=>t.id===d.id)!.truck}`:d.name} · ${d.trade}${ts?` · ${ts.status}`:''}${d.id===active.id&&colocated?` · ${destination==='depot'?'Goob Depot':job?.address}`:''}`;
+    for(const base of definitions){const custom=base.id==='custom-destination',d=custom&&job&&!definitions.some(d=>d.id===job.id)?{...base,id:base.id,trade:job.trade,name:job.address,node:job.node}:base;const ts=d.tech?p.state.technicians[d.id]:undefined,selected=(custom&&!!job&&!definitions.some(d=>d.id===job.id))||(p.selection?.id===d.id&&activeState.status!=='Returning')||!!p.selection&&(d.id===active.id||d.id===destination);
+      let visible=(!custom||!!job&&!definitions.some(d=>d.id===job.id))&&(p.preferences.trade==='All'||p.preferences.trade===d.trade)&&(!ts||!p.preferences.available||['Available','Completed'].includes(ts.status))&&(!jobs.some(j=>j.id===d.id)||p.preferences.jobStatus==='All'||p.state.jobs[d.id]===p.preferences.jobStatus)&&(d.id!=='willow'||p.state.jobs.oak==='Completed')||selected||p.follow===d.id||d.id==='depot';if(colocated&&(d.id===destination||custom))visible=false;
+      const point=ts?position(p,d.id):realStops[d.node];if(!validMapPoint(point)){const two=markers2.current.get(d.id);if(two){two.visible=false;two.button.style.display='none';two.tooltip.style.visibility='hidden';}markers3.current.get(d.id)?.marker.remove();continue;}const label=d.id==='depot'?'Goob Depot':`${ts&&!p.preferences.names?`Truck ${technicians.find(t=>t.id===d.id)!.truck}`:d.name} · ${d.trade}${ts?` · ${ts.status}`:''}${d.id===active.id&&colocated?` · ${destination==='depot'?'Goob Depot':job?.address}`:''}`;
       const two=markers2.current.get(d.id);if(two){two.button.style.setProperty('--pin-color',tradeColors[d.trade]);two.button.querySelector('img')!.src=tradeIcon(d.trade);two.point=point;two.button.dataset.lat=String(point.lat);two.button.dataset.lng=String(point.lng);two.visible=visible;two.selected=selected;two.button.classList.toggle('selected',selected);two.button.setAttribute('aria-pressed',String(selected));two.tooltip.textContent=label;const direction=two.button.querySelector('i');if(direction)direction.style.display=ts?'block':'none';}
       const three=markers3.current.get(d.id);if(three){three.pin.background=tradeColors[d.trade];if(!ts)three.pin.glyphSrc=tradeIcon(d.trade);three.marker.position={...point,altitude:ts?7:2};three.marker.label=custom&&selected||p.selection?.id===d.id||colocated&&d.id===active.id?label:null;three.marker.zIndex=selected?100:ts?20:10;three.marker.collisionBehavior=selected?'REQUIRED_AND_HIDES_OPTIONAL':'OPTIONAL_AND_HIDES_LOWER_PRIORITY';three.pin.scale=selected?1.2:ts?1.05:.9;if(visible){if(!three.marker.parentNode)map3.current?.append(three.marker);}else three.marker.remove();}
     }overlay.current?.draw();
@@ -128,8 +129,8 @@ export function GoogleDispatchMap(props:Props){
     if(!loaded2)return;return props.motion.subscribe((state,dt)=>{
       const p={...current.current,state},factor=p.reduced?1:1-Math.exp(-dt*9);
       if(!p.follow&&!Object.values(state.technicians).some(t=>t.running||t.replay?.running))return;
-      for(const t of technicians){const point=position(p,t.id),two=markers2.current.get(t.id);if(two){two.point=point;two.button.dataset.lat=String(point.lat);two.button.dataset.lng=String(point.lng);two.heading+=(((point.heading-two.heading)%360+540)%360-180)*factor;two.button.querySelector('i')!.style.transform=`rotate(${two.heading-90}deg)`;}const three=markers3.current.get(t.id);if(three)three.marker.position={...point,altitude:7};}if(p.mode==='2D')overlay.current?.draw();
-      if(!p.follow||manual.current)return;const target=position(p,p.follow),ease=p.reduced?1:1-Math.exp(-dt*5);
+      for(const t of technicians){const point=position(p,t.id);if(!validMapPoint(point))continue;const two=markers2.current.get(t.id);if(two){two.point=point;two.button.dataset.lat=String(point.lat);two.button.dataset.lng=String(point.lng);two.heading+=(((point.heading-two.heading)%360+540)%360-180)*factor;two.button.querySelector('i')!.style.transform=`rotate(${two.heading-90}deg)`;}const three=markers3.current.get(t.id);if(three)three.marker.position={...point,altitude:7};}if(p.mode==='2D')overlay.current?.draw();
+      if(!p.follow||manual.current)return;const target=position(p,p.follow);if(!validMapPoint(target))return;const ease=p.reduced?1:1-Math.exp(-dt*5);
       if(p.mode==='3D'&&map3.current){const c=map3.current.center??{...target,altitude:100};map3.current.center={lat:c.lat+(target.lat-c.lat)*ease,lng:c.lng+(target.lng-c.lng)*ease,altitude:c.altitude};}else{const c=map2.current?.getCenter();if(c)map2.current?.moveCamera({center:{lat:c.lat()+(target.lat-c.lat())*ease,lng:c.lng()+(target.lng-c.lng())*ease},tilt:0,heading:0});}
     });
   },[props.motion,loaded2]);

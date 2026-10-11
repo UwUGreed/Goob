@@ -15,12 +15,12 @@ type Props={state:Simulation;motion:MotionSource;preferences:Preferences;selecti
 function context(p:Props) {
   const technicians=teamRecords(p.state);
   const explicit=p.selection?.type==='job'?allJobs(p.state).find(j=>j.id===p.selection?.id):undefined;
-  const found=p.selection?.type==='tech'?technicians.find(t=>t.id===p.selection?.id):explicit?(technicians.find(t=>p.state.technicians[t.id].jobId===explicit.id)??technicians.find(t=>t.trade===explicit.trade)):technicians.find(t=>t.id===p.follow)??technicians[0];
+  const found=p.selection?.type==='tech'?technicians.find(t=>t.id===p.selection?.id):explicit?(technicians.find(t=>p.state.technicians[t.id]?.jobId===explicit.id)??technicians.find(t=>t.trade===explicit.trade)):technicians.find(t=>t.id===p.follow)??technicians[0];
   const tech=found??technicians[0];
   const state=p.state.technicians[tech.id];
   const job=explicit??allJobs(p.state).find(j=>j.id===state.jobId);
   const destination=state.status==='Returning'?nodes[depot]:job?nodes[job.node]:null;
-  const route=state.route.length&&['Assigned','En route','Arrived','Working','Returning'].includes(state.status)?state.route:job&&nodes[job.node]&&p.state.jobs[job.id]==='Unassigned'&&['Available','Completed'].includes(state.status)?findRoute(state.node,job.node):[];
+  const route=state.route.length&&['Assigned','En route','Arrived','Working','Returning'].includes(state.status)?state.route:job&&nodes[state.node]&&nodes[job.node]&&p.state.jobs[job.id]==='Unassigned'&&['Available','Completed'].includes(state.status)?findRoute(state.node,job.node):[];
   return {tech:tech!,job,destination,route};
 }
 

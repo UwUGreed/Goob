@@ -143,3 +143,17 @@ Completion corrections for installed parts require the existing material disposi
 ## Backend work review
 
 Work review remains available from the workspace menu and connects to the existing operations backend, with separate fictional job identities. Run the operations server on port 8081 for this view. Vite proxies its API endpoints while the Dispatch adapter serves its own endpoints. Browser tests require GOOB_E2E_BASE_URL for an explicitly selected isolated workspace and optionally PLAYWRIGHT_CHROMIUM_EXECUTABLE.
+# Invoices
+
+The independent `/invoices` workspace supports Gemini-assisted and manual invoice drafts, reviewed membership adjustments, saving/finalizing, print and PDF. See [INVOICES.md](INVOICES.md) for server configuration, migration and verification details.
+
+
+### Saved views and inventory images
+
+Use **Customize view** on each page for Fieldbook, After hours, or Workshop themes, spacing, named views, and supported presentation choices. Inventory and Jobs support cards; Inventory also supports optional columns and reorderable summary, replenishment, and movement sections. Identity, available stock, reorder status, warnings, and actions remain visible. Dispatch retains technician-name, route-preview, and job-status controls in the drawer; hiding optional travel details keeps primary playback actions visible. Save / Save as persist to the authenticated user's workspace and page; Cancel restores the saved appearance. Reset previews Fieldbook defaults. Owners can edit company defaults, while personal overrides stay separate. **Use company defaults** removes a personal override.
+
+Apply `20261014_view_preferences` with Alembic and update runtime grants from `deploy/backend/grants.sql`. View settings use `/api/v1/views/{page}`, scoped by the server's authenticated tenant and subject, with revision conflict checks. SKU image references and alt text use the existing catalog JSON fields, so no stock columns change. Authorized office/owner users can replace an image using a validated public HTTPS URL; the existing application has no image-upload storage flow. Image replacement uses the normal idempotent portal command and SKU revision checks.
+
+`python -m scripts.seed_inventory_images` attaches bundled photos only to matching demo SKUs with no existing image. It preserves quantities, reservations, thresholds, and existing images. [Image credits and licenses](public/inventory-images/README.md) accompany the optimized local WebP assets. Unknown items show a reserved-space fallback. No image implies verification of product specifications.
+
+Browser verification: set an explicit `TEST_DATABASE_URL` and `GOOB_BROWSER_CHECK=1`, then run `pytest tests/backend_v1/test_inventory_browser.py`. It uses a disposable database schema, exercises preferences and image replacement, and saves desktop/mobile screenshots. Provider generation is blocked in this test.

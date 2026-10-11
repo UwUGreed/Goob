@@ -59,6 +59,15 @@ class Branch(Base):
     name: Mapped[str]
 
 
+class ViewPreference(Base):
+    __tablename__ = "view_preferences_v1"
+    tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants_v1.id"), primary_key=True)
+    subject: Mapped[str] = mapped_column(String, primary_key=True)
+    page: Mapped[str] = mapped_column(String, primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+    settings: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+
 class Membership(Base):
     __tablename__ = "memberships_v1"
     tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants_v1.id"), primary_key=True)
@@ -236,17 +245,25 @@ class Proposal(Scoped, Base):
 
 class Invoice(Scoped, Base):
     __tablename__ = "invoices_v1"
-    job_id: Mapped[str]
-    proposal_id: Mapped[str]
+    job_id: Mapped[str | None] = mapped_column(String)
+    proposal_id: Mapped[str | None] = mapped_column(String)
+    customer_id: Mapped[str | None] = mapped_column(String)
+    property_id: Mapped[str | None] = mapped_column(String)
+    number: Mapped[str | None] = mapped_column(String)
+    status: Mapped[str] = mapped_column(String, default="approved_draft", server_default="approved_draft")
+    revision: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
     snapshot: Mapped[dict] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (
         branch_fk(),
         record_fk("job_id"),
+        record_fk("customer_id"),
+        record_fk("property_id"),
         ForeignKeyConstraint(
             ["tenant_id", "proposal_id"], ["proposals_v1.tenant_id", "proposals_v1.id"]
         ),
         UniqueConstraint("tenant_id", "proposal_id"),
+        UniqueConstraint("tenant_id", "number"),
     )
 
 

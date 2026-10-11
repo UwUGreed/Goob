@@ -11,7 +11,7 @@ export type Preferences = { trade: Trade | 'All'; available: boolean; jobStatus:
 export type Selection = { type: 'job' | 'tech'; id: string } | null;
 
 export type Customer={verification?:boolean;accountType?:"residential"|"commercial";contacts?:{name:string;email:string;phone:string;contact_role:string}[];addresses?:string[];branchId?:string;id:string;name:string;email:string;phone:string;address:string};
-export type StockItem={reservedQuantity?:number;branchId?:string;skuId?:string;locationId?:string;id:string;part:string;sku:string;trade:Trade;truck:string;quantity:number;threshold:number};
+export type StockItem={skuRevision?:number;image_url?:string;image_alt?:string;image_attribution?:string;image_source?:string;image_illustrative?:boolean;reservedQuantity?:number;branchId?:string;skuId?:string;locationId?:string;id:string;part:string;sku:string;trade:Trade;truck:string;quantity:number;threshold:number};
 
 export type Property={id:string;customerId:string;name:string;address:string;revision:number};
 export type Equipment={id:string;propertyId:string;name:string;trade:Trade;model:string;serial:string};

@@ -1,0 +1,26 @@
+{
+  "Run capacitor": {
+    "image_url": "/inventory-images/capacitor.webp",
+    "image_alt": "Illustrative motor run capacitor, cropped from an AC motor photograph",
+    "image_attribution": "Mister rf / CC BY-SA 4.0; cropped, resized and converted to WebP",
+    "image_source": "https://commons.wikimedia.org/wiki/File:Shugart_SA1004_HDD_-_AC_motor_and_run_capacitor.jpg",
+    "image_illustrative": true,
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
+  "Shut-off valve": {
+    "image_url": "/inventory-images/valve.webp",
+    "image_alt": "Illustrative brass shut-off valve with a red butterfly handle",
+    "image_attribution": "Emilian Robert Vicol / CC BY 2.0; resized and converted to WebP",
+    "image_source": "https://commons.wikimedia.org/wiki/File:Brass-Ball-Valve_MF_Butterfly_12592-360x480_%284999932531%29.jpg",
+    "image_illustrative": true,
+    "license_url": "https://creativecommons.org/licenses/by/2.0/"
+  },
+  "Circuit breaker": {
+    "image_url": "/inventory-images/breaker.webp",
+    "image_alt": "Illustrative circuit breaker on a neutral background",
+    "image_attribution": "MebaMCB China / CC0 1.0; resized and converted to WebP",
+    "image_source": "https://commons.wikimedia.org/wiki/File:Circuit_Breaker_3.png",
+    "image_illustrative": true,
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+  }
+}

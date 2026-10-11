@@ -38,6 +38,16 @@ def register_portal(app, factory, session, actor):
     def dispatch_state(db=Depends(session), user=Depends(actor)):
         return {"state": desk.snapshot(db, user)}
 
+    @app.get("/api/dispatch/jobs/{job_id}")
+    def dispatch_job(job_id: str, db=Depends(session), user=Depends(actor)):
+        from operations.domain.common import record
+        record(db, user, job_id, "jobs")
+        state = desk.snapshot(db, user)
+        job = next((j for j in state["records"] if j["id"] == job_id), None)
+        if job is None:
+            raise Problem("Job not found or archived.", 404)
+        return {"job": job, "status": state["jobs"][job_id]}
+
     @app.post("/api/dispatch")
     def dispatch_command(body: dict = Body(...), idempotency_key: str = Header(default=""), db=Depends(session), user=Depends(actor)):
         value = command(db, user, idempotency_key, "portal.dispatch", body, lambda: desk.run(db, user, body))
