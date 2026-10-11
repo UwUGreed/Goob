@@ -89,3 +89,18 @@ test('double assign cannot also start the replacement travel button',async({page
  await expect(page.getByRole('complementary',{name:'Selection details'})).toContainText('Assigned');
  await page.getByRole('button',{name:'Start travel simulation',exact:true}).click();await expect(page.getByRole('button',{name:'Pause',exact:true})).toBeVisible();
 });
+
+test('compact dispatch pins keep a stable hit area while hovered',async({page,context})=>{
+ const api=service();await api.connect(context);await page.goto('/dispatch?job=oak');
+ const candidate=page.locator('.map-label-layer .compact:visible').first();await expect(candidate).toBeVisible();
+ const id=await candidate.getAttribute('data-map-marker');const pin=page.locator('.map-label-layer [data-map-marker="'+id+'"]');
+ await pin.scrollIntoViewIfNeeded();
+ const measure=()=>pin.evaluate(el=>({width:el.clientWidth,height:el.clientHeight}));
+ const before=await measure();await pin.hover();
+ await expect.poll(measure).toEqual(before);
+ await expect(pin.locator(':scope > span:nth-child(2)')).toBeVisible();
+ await page.waitForTimeout(800);
+ expect(await measure()).toEqual(before);
+ expect(await pin.evaluate(el=>el.matches(':hover'))).toBe(true);
+ await pin.click();await expect(pin).toHaveClass(/selected/);
+});
