@@ -1,7 +1,7 @@
 import { test, expect, type BrowserContext } from '@playwright/test';
 import { initialState, reducer, type Action } from '../src/simulation';
 import { preset, type Page, type View, type ViewList } from '../src/workspace/config';
-function service(databaseBacked=false){
+function service(databaseBacked=true){
  let state:ReturnType<typeof initialState>={...initialState(),databaseBacked},counter=0,failNext=false;
  const snapshots:Record<Page,ViewList>={overview:{views:[],teamDefault:null,activeViewId:null},dispatch:{views:[],teamDefault:null,activeViewId:null}};
  const actions:string[]=[];
@@ -58,4 +58,24 @@ test('visible Dispatch reset pauses travel and retains assignments and stock',as
  await expect(page).toHaveURL(/\/dispatch$/);expect(api.actions).toContain('pause');expect(api.actions).not.toContain('reset');
  expect(api.state.technicians.maya.jobId).toBe('oak');expect(api.state.technicians.maya.running).toBe(false);expect(api.state.stock).toEqual(stock);
  await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Reset Dispatch',exact:true}).scrollIntoViewIfNeeded();await expect(page.getByRole('button',{name:'Reset Dispatch',exact:true})).toBeVisible();expect(errors).toEqual([]);
+});
+
+
+test('fresh demo runs full lifecycle, resets and never writes saved records',async({page,context})=>{
+ const api=service(true);await api.connect(context);const before=structuredClone(api.state);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/dispatch');await page.getByRole('button',{name:'Start fresh demo',exact:true}).click();
+ await expect(page.getByText('Demo sandbox:',{exact:false})).toBeVisible();
+ await page.locator('[data-widget="queue"] tbody tr').filter({hasText:'Oak'}).getByRole('button').click();
+ await page.getByRole('button',{name:'Assign Maya',exact:true}).click();
+ await page.getByRole('button',{name:'Start travel simulation',exact:true}).click();
+ await page.getByRole('button',{name:'10\u00d7',exact:true}).click();
+ await page.getByRole('button',{name:'Start work',exact:true}).click({timeout:20000});
+ await page.getByRole('button',{name:'Complete job',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Return to depot',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Reset Dispatch',exact:true}).click();
+ await page.locator('[data-widget="queue"] tbody tr').filter({hasText:'Oak'}).getByRole('button').click();
+ await expect(page.getByRole('button',{name:'Assign Maya',exact:true})).toBeEnabled();
+ expect(api.actions).toEqual([]);expect(api.state).toEqual(before);
+ await page.getByRole('button',{name:'Exit demo',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Start fresh demo',exact:true})).toBeVisible();expect(errors).toEqual([]);
 });

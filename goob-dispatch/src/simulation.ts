@@ -8,6 +8,9 @@ export type Action = {type:"membership";operation:string;values:Record<string,un
 export function initialState():Simulation {
   return {customers:customerFixtures,stock:stockFixtures,speed:1,technicians:Object.fromEntries(technicians.map(t=>[t.id,{status:t.id==='jordan'?'Working':'Available',node:t.start,jobId:t.id==='jordan'?'cedar':undefined,route:[],progress:0,running:false,duration:0}])),jobs:Object.fromEntries(jobs.map(j=>[j.id,j.id==='cedar'?'Working':'Unassigned']))};
 }
+export function freshDemoState():Simulation {
+ const base=initialState();return {...base,databaseBacked:false,demoSandbox:true,jobs:Object.fromEntries(jobs.map(j=>[j.id,'Unassigned'])),technicians:Object.fromEntries(technicians.map(t=>[t.id,{status:'Available',node:t.start,route:[],progress:0,running:false,duration:0}]))};
+}
 export const stockRecords=(state:Simulation):StockItem[]=>state.stock??stockFixtures;
 export function reservedCount(state:Simulation,truck:string,part:string,exclude?:string){if(state.reservations)return state.reservations.filter(r=>r.truck===truck&&r.part===part&&r.jobId!==exclude).reduce((n,r)=>n+r.quantity,0);return Object.entries(state.technicians).filter(([id,t])=>teamRecords(state).find(x=>x.id===id)?.truck===truck&&t.jobId!==exclude&&['Assigned','En route','Arrived','Working'].includes(t.status)&&allJobs(state).find(j=>j.id===t.jobId)?.part===part).length;}
 export function partsReady(state:Simulation,truck:string,part:string,jobId?:string){return stockRecords(state).some(i=>i.truck===truck&&i.part===part&&i.quantity-reservedCount(state,truck,part,jobId)>0);}
@@ -40,7 +43,7 @@ export function reducer(state:Simulation,action:Action):Simulation {
   }
   if(action.type==='replace')return action.state;
   if(action.type==='preview')return{...state,preview:action.preview};
-  if(action.type==='reset') return state.databaseBacked?{...state,speed:1,preview:undefined,technicians:Object.fromEntries(Object.entries(state.technicians).map(([id,t])=>[id,{...t,running:false,replay:undefined}]))}:initialState();
+  if(action.type==='reset') return state.demoSandbox?freshDemoState():state.databaseBacked?{...state,speed:1,preview:undefined,technicians:Object.fromEntries(Object.entries(state.technicians).map(([id,t])=>[id,{...t,running:false,replay:undefined}]))}:initialState();
   if(action.type==='speed') return [1,5,10].includes(action.speed)?{...state,speed:action.speed}:state;
   if(action.type==='tick') {
     const next={...state,technicians:{...state.technicians},jobs:{...state.jobs}};

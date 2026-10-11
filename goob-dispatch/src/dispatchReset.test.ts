@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {initialState,reducer} from './simulation';
+import {initialState,freshDemoState,reducer} from './simulation';
 import {jobs} from './data';
 describe('database Dispatch reset',()=>{
  it('pauses every technician and clears ephemeral replay without modifying business records',()=>{
@@ -31,5 +31,15 @@ describe('completed visit replay',()=>{
  it('leaves a completed visit with unknown location untouched',()=>{
   const base=initialState();const state={...base,databaseBacked:true,records:[{...jobs[0],id:'unknown',node:'unknown'}],technicians:{...base.technicians,jordan:{...base.technicians.jordan,status:'Completed' as const,jobId:'unknown'}}};
   expect(reducer(state,{type:'replay',techId:'jordan'})).toBe(state);
+ });
+});
+
+
+describe('fresh demo sandbox',()=>{
+ it('starts and resets with all visits unassigned and all trucks available',()=>{
+  const fresh=freshDemoState();expect(Object.values(fresh.jobs).every(s=>s==='Unassigned')).toBe(true);
+  expect(Object.values(fresh.technicians).every(t=>t.status==='Available')).toBe(true);
+  expect(fresh.databaseBacked).toBe(false);expect(fresh.demoSandbox).toBe(true);
+  expect(reducer({...fresh,jobs:{...fresh.jobs,oak:'Completed'}},{type:'reset'})).toEqual(fresh);
  });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSimulation, reducer, type Action } from '../simulation';
+import { useSimulation, freshDemoState, reducer, type Action } from '../simulation';
 import { allJobs } from '../schedule';
 import { depot, technicians, teamRecords } from '../data';
 import { api, disconnectedConfig, fetchDrivingRoute, type IntegrationConfig } from './api';
@@ -8,16 +8,17 @@ import { geoPosition, realStops, type DrivingRoute } from './geography';
 import type { Job, JobStatus, Selection, Simulation } from '../types';
 export function useDispatchController(selection:Selection,realMap:boolean){
   const {state,dispatch:local,motion}=useSimulation({databaseBacked:true,records:[],roster:[],stock:[],customers:[],jobs:{},technicians:{},speed:1}),current=useRef(state);current.current=motion.getState();
+  const savedRecords=useRef<Simulation|null>(null);
   const [config,setConfig]=useState<IntegrationConfig>(disconnectedConfig),[configLoaded,setConfigLoaded]=useState(false),[ready,setReady]=useState(false),[pending,setPending]=useState(false),[error,setError]=useState('');
   const locked=useRef(false),arrivals=useRef(new Set<string>()),arrivalRequests=useRef(new Map<string,Promise<boolean>>()),alive=useRef(true);
   useEffect(()=>{alive.current=true;api<IntegrationConfig>('/api/config').then(async c=>{if(!alive.current)return;setConfig(c);setConfigLoaded(true);if(!c.authenticated)throw new Error('Sign in to open database records.');const saved=await api<{state:Simulation}>('/api/dispatch');const hydrated={...saved.state,technicians:{...saved.state.technicians}};for(const [id,t] of Object.entries(hydrated.technicians)){const visit=allJobs(hydrated).find(j=>j.id===t.jobId);const destination=t.status==='Returning'?depot:visit?.node;if(destination&&realStops[t.node]&&realStops[destination]&&['Assigned','En route','Returning'].includes(t.status)){const route=findRoute(t.node,destination);hydrated.technicians[id]={...t,route,duration:Math.max(10,routeLength(route)/20),running:false};}}local({type:'replace',state:hydrated});if(alive.current)setReady(true);}).catch(e=>{if(alive.current){setConfigLoaded(true);setError(e.message);}});return()=>{alive.current=false;};},[]);
   useEffect(()=>{
     let request=0;
     const refresh=()=>{
-      if(!ready)return;
+      if(!ready||!motion.getState().databaseBacked)return;
       const number=++request;
       api<{state:Simulation}>('/api/dispatch').then(saved=>{
-        if(!alive.current||number!==request)return;
+        if(!alive.current||number!==request||!motion.getState().databaseBacked)return;
         const current=motion.getState();
         local({type:'replace',state:{...saved.state,technicians:Object.fromEntries(Object.entries(saved.state.technicians).map(([id,t])=>[id,current.technicians[id]?.status===t.status&&current.technicians[id]?.jobId===t.jobId?current.technicians[id]:t])),speed:current.speed}});
       }).catch(e=>{if(alive.current&&number===request)setError(e.message);});
@@ -31,7 +32,7 @@ export function useDispatchController(selection:Selection,realMap:boolean){
   const present=!!selectedId&&allJobs(state).some(j=>j.id===selectedId);
   useEffect(()=>{
     setSelectionError('');setSelectionLoading(false);
-    if(!ready||!selectedId||present)return;
+    if(!ready||!state.databaseBacked||!selectedId||present)return;
     const abort=new AbortController();setSelectionLoading(true);
     fetch('/api/dispatch/jobs/'+encodeURIComponent(selectedId),{credentials:'same-origin',signal:abort.signal}).then(async response=>{
       if(!response.ok)throw new Error(response.status===404?'Job not found.':response.status===403?'Access denied for this job.':'Unable to load this job. Please retry.');
@@ -40,13 +41,13 @@ export function useDispatchController(selection:Selection,realMap:boolean){
       const latest=motion.getState();local({type:'replace',state:{...latest,records:[...(latest.records??[]).filter(j=>j.id!==value.job.id),value.job],jobs:{...latest.jobs,[value.job.id]:value.status}}});
     }).catch(e=>{if(!abort.signal.aborted)setSelectionError(e.message);}).finally(()=>{if(!abort.signal.aborted)setSelectionLoading(false);});
     return()=>abort.abort();
-  },[ready,selectedId,present]);
+  },[ready,selectedId,present,state.databaseBacked]);
   const technicians=teamRecords(state),jobs=allJobs(state);
   const explicit=selection?.type==='job'?jobs.find(j=>j.id===selection.id):undefined;
   const tech=selection?.type==='tech'?technicians.find(t=>t.id===selection.id):technicians.find(t=>state.technicians[t.id]?.jobId===explicit?.id)??technicians.find(t=>t.trade===explicit?.trade);
   const job=explicit??jobs.find(j=>j.id===(tech&&state.technicians[tech.id].jobId));
   const ts=tech?state.technicians[tech.id]:undefined;
-  const routeKey=realMap&&config.browserKey&&job&&tech&&ts&&realStops[ts.node]&&realStops[job.node]&&state.jobs[job.id]==='Unassigned'&&['Available','Completed'].includes(ts.status)?`${tech.id}/${ts.node}/${job.id}`:'';
+  const routeKey=state.databaseBacked&&realMap&&config.browserKey&&job&&tech&&ts&&realStops[ts.node]&&realStops[job.node]&&state.jobs[job.id]==='Unassigned'&&['Available','Completed'].includes(ts.status)?`${tech.id}/${ts.node}/${job.id}`:'';
   useEffect(()=>{
     if(!routeKey){local({type:'preview',preview:undefined});return;}
     const abort=new AbortController(),origin=realStops[ts!.node],destination=realStops[job!.node];local({type:'preview',preview:{route:null,loading:true,error:'',key:routeKey}});
@@ -56,10 +57,11 @@ export function useDispatchController(selection:Selection,realMap:boolean){
   },[routeKey,config.routes]);
   // Simulation interpolation is local and ephemeral. The backend owns approval
   // and status validation, and never persists Google route responses.
-  useEffect(()=>{Object.entries(state.technicians).forEach(([id,t])=>{if(t.progress!==1||t.running||!['Arrived','Available'].includes(t.status)||!t.route.length||arrivals.current.has(id))return;arrivals.current.add(id);arrivalRequests.current.set(id,api('/api/dispatch',{type:'arrive',techId:id}).then(()=>true).catch(e=>{if(alive.current)setError(`${e.message} Retry status sync before starting work.`);return false;}));});},[state]);
+  useEffect(()=>{if(!state.databaseBacked)return;Object.entries(state.technicians).forEach(([id,t])=>{if(t.progress!==1||t.running||!['Arrived','Available'].includes(t.status)||!t.route.length||arrivals.current.has(id))return;arrivals.current.add(id);arrivalRequests.current.set(id,api('/api/dispatch',{type:'arrive',techId:id}).then(()=>true).catch(e=>{if(alive.current)setError(`${e.message} Retry status sync before starting work.`);return false;}));});},[state]);
   async function dispatch(action:Action):Promise<boolean>{
     current.current=motion.getState();
     if(action.type==='tick'||action.type==='replace'||action.type==='preview')return false;
+    if(!current.current.databaseBacked){const next=reducer(current.current,action);local(action);return next!==current.current;}
     // Replay is a local presentation action, never a second dispatch approval.
     if(action.type==='replay'||(('techId' in action)&&current.current.technicians[action.techId]?.replay&&['start','pause'].includes(action.type))){if(locked.current)return false;local(action);return true;}
     if(action.type==='speed'){local(action);return true;}if(action.type==='reset'){if(locked.current||!ready)return false;for(const [id,t] of Object.entries(current.current.technicians)){if(t.running&&!t.replay&&!(await dispatch({type:'pause',techId:id})))return false;}local(action);return true;}
@@ -81,5 +83,7 @@ export function useDispatchController(selection:Selection,realMap:boolean){
     finally{locked.current=false;if(alive.current)setPending(false);}
   }
   const hasGoogleJourney=Object.values(state.technicians).some(t=>t.driving&&['Assigned','En route','Arrived','Working','Returning'].includes(t.status));
-  return{state,dispatch,motion,config,configLoading:!configLoaded,ready,pending,error,clearError:()=>setError(''),hasGoogleJourney,selectionError,selectionLoading};
+  function startDemo(){if(locked.current||!ready)return false;if(state.databaseBacked)savedRecords.current=motion.getState();local({type:'replace',state:freshDemoState()});setError('');setSelectionError('');setSelectionLoading(false);return true;}
+  function exitDemo(){if(savedRecords.current){local({type:'replace',state:savedRecords.current});savedRecords.current=null;}}
+  return{startDemo,exitDemo,state,dispatch,motion,config,configLoading:!configLoaded,ready,pending,error,clearError:()=>setError(''),hasGoogleJourney,selectionError,selectionLoading};
 }

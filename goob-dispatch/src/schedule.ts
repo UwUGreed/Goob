@@ -12,7 +12,7 @@ export const scheduleFixtures:Booking[]=[
  {techId:'chris',title:'Filter replacement',date:demoDate,start:stamp(demoDate,13),end:stamp(demoDate,14),travelStart:stamp(demoDate,12,45)},
  {techId:'jordan',jobId:'cedar',title:'Electrical service',date:demoDate,start:stamp(demoDate,9),end:stamp(demoDate,11),travelStart:stamp(demoDate,9)},
 ];
-export function bookingsFor(state:Simulation,techId:string,day:string):Booking[]{return [...(state.databaseBacked?[]:scheduleFixtures),...Object.entries(state.bookings??{}).map(([jobId,slot])=>({...slot,jobId,title:jobLabel(jobId,state).issue}))].filter(b=>b.techId===techId&&b.date===day).sort((a,b)=>a.travelStart-b.travelStart);}
+export function bookingsFor(state:Simulation,techId:string,day:string):Booking[]{return [...(state.databaseBacked||state.demoSandbox?[]:scheduleFixtures),...Object.entries(state.bookings??{}).map(([jobId,slot])=>({...slot,jobId,title:jobLabel(jobId,state).issue}))].filter(b=>b.techId===techId&&b.date===day).sort((a,b)=>a.travelStart-b.travelStart);}
 export function slotAllowed(state:Simulation,techId:string,slot:ScheduleSlot){return /^\d{4}-\d{2}-\d{2}$/.test(slot.date)&&Number.isFinite(slot.start)&&Number.isFinite(slot.end)&&Number.isFinite(slot.travelStart)&&slot.travelStart>=stamp(slot.date,9)&&slot.end<=stamp(slot.date,18)&&slot.start>=slot.travelStart&&slot.end>slot.start&&slot.end-slot.start<=4*3600000&&!bookingsFor(state,techId,slot.date).some(b=>slot.travelStart<b.end&&slot.end>b.travelStart);}
 export function proposedSlot(state:Simulation,techId:string,jobId:string,day=demoDate,travelMinutes=10):ScheduleSlot|null{
  const travel=Math.max(1,Math.ceil(travelMinutes))*60000,work=jobLabel(jobId,state).minutes*60000;
