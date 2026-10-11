@@ -7,7 +7,7 @@ from operations.persistence.database import engine_for
 @pytest.mark.parametrize("scheme", ["postgres", "postgresql", "postgresql+psycopg"])
 def test_shared_postgres_url_formats(scheme, monkeypatch):
     monkeypatch.delenv("GOOB_ENV", raising=False)
-    engine = engine_for(f"{scheme}://user:p%40ss@localhost/test?sslmode=require")
+    engine = engine_for(f"{scheme}://user:p%40ss@cloud.example/test?sslmode=require")
     assert engine.url.drivername == "postgresql+psycopg"
     assert engine.url.password == "p@ss"
     assert engine.url.query["sslmode"] == "require"
@@ -16,13 +16,13 @@ def test_shared_postgres_url_formats(scheme, monkeypatch):
 
 def test_api_role_override_and_explicit_test_target(monkeypatch):
     monkeypatch.delenv("GOOB_ENV", raising=False)
-    monkeypatch.setenv("DATABASE_URL", "postgresql://shared@localhost/shared")
-    monkeypatch.setenv("GOOB_API_DATABASE_URL", "postgresql://runtime@localhost/runtime")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://shared@cloud.example/shared")
+    monkeypatch.setenv("GOOB_API_DATABASE_URL", "postgresql://runtime@cloud.example/runtime")
     engine = engine_for()
     assert engine.url.database == "runtime"
     assert engine.url.query["sslmode"] == "require"
     engine.dispose()
-    engine = engine_for("postgresql://test@localhost/isolated")
+    engine = engine_for("postgresql://test@cloud.example/isolated")
     assert engine.url.database == "isolated"
     engine.dispose()
 
@@ -30,17 +30,17 @@ def test_api_role_override_and_explicit_test_target(monkeypatch):
 def test_cloud_tls_cannot_be_disabled(monkeypatch):
     monkeypatch.delenv("GOOB_ENV", raising=False)
     with pytest.raises(RuntimeError, match="requires TLS"):
-        engine_for("postgresql://user@localhost/test?sslmode=disable")
+        engine_for("postgresql://user@cloud.example/test?sslmode=disable")
 
 
 def test_production_ssl_mode_is_parsed_not_substring(monkeypatch):
     monkeypatch.setenv("GOOB_ENV", "production")
     with pytest.raises(RuntimeError, match="verify-full"):
         engine_for(
-            "postgresql://user@localhost/test?sslmode=disable&application_name=sslmode=verify-full"
+            "postgresql://user@cloud.example/test?sslmode=disable&application_name=sslmode=verify-full"
         )
     engine = engine_for(
-        "postgresql://user@localhost/test?sslmode=verify-full&sslrootcert=/tmp/ca.pem"
+        "postgresql://user@cloud.example/test?sslmode=verify-full&sslrootcert=/tmp/ca.pem"
     )
     assert engine.url.query["sslrootcert"] == "/tmp/ca.pem"
     engine.dispose()
@@ -65,3 +65,8 @@ def test_invalid_database_does_not_fall_back_or_echo_credentials(value):
     with pytest.raises(RuntimeError) as error:
         engine_for(value)
     assert value not in str(error.value)
+
+
+def test_local_database_is_rejected():
+    with pytest.raises(RuntimeError, match="local databases are not supported"):
+        engine_for("postgresql://user@localhost/test")

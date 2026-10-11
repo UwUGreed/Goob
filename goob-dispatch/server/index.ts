@@ -1,7 +1,13 @@
 import assets from 'virtual:client-assets';
-import { handleApi, type Env } from './api';
+type Env={GOOB_BACKEND_URL?:string};
 export default {async fetch(request:Request,env:Env){
-  const path=new URL(request.url).pathname;if(path.startsWith('/api/'))return handleApi(request,env);
+  const source=new URL(request.url),path=source.pathname;
+  if(path.startsWith('/api/')){
+    if(!env.GOOB_BACKEND_URL)return Response.json({error:'Configure the Tiger Cloud application backend URL.'},{status:503});
+    const target=new URL(path+source.search,env.GOOB_BACKEND_URL);
+    if(target.protocol!=='https:')return Response.json({error:'The application backend must use HTTPS.'},{status:503});
+    try{return await fetch(new Request(target,request));}catch{return Response.json({error:'The database-backed application server is unavailable.'},{status:503});}
+  }
   if(path==='/terms'||path==='/privacy')return new Response(legal(path),{headers:{'Content-Type':'text/html;charset=utf-8'}});
   const asset=assets[path==='/'?'/index.html':path]??(!path.includes('.')?assets['/index.html']:undefined);
   if(!asset)return new Response('Not found',{status:404});

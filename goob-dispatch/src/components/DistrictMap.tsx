@@ -1,3 +1,4 @@
+import { teamRecords } from '../data';
 import { allJobs } from '../schedule';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -12,16 +13,19 @@ import type { Point, Preferences, Selection, Simulation } from '../types';
 type Props={state:Simulation;motion:MotionSource;preferences:Preferences;selection:Selection;onSelect:(s:Selection)=>void;mode:'2D'|'3D';follow:string|null;onFollow:(id:string|null)=>void;reduced:boolean};
 
 function context(p:Props) {
+  const technicians=teamRecords(p.state);
   const explicit=p.selection?.type==='job'?allJobs(p.state).find(j=>j.id===p.selection?.id):undefined;
-  const tech=p.selection?.type==='tech'?technicians.find(t=>t.id===p.selection?.id):explicit?(technicians.find(t=>p.state.technicians[t.id].jobId===explicit.id)??technicians.find(t=>t.trade===explicit.trade)):technicians.find(t=>t.id===p.follow)??technicians[0];
-  const state=p.state.technicians[tech!.id];
+  const found=p.selection?.type==='tech'?technicians.find(t=>t.id===p.selection?.id):explicit?(technicians.find(t=>p.state.technicians[t.id].jobId===explicit.id)??technicians.find(t=>t.trade===explicit.trade)):technicians.find(t=>t.id===p.follow)??technicians[0];
+  const tech=found??technicians[0];
+  const state=p.state.technicians[tech.id];
   const job=explicit??allJobs(p.state).find(j=>j.id===state.jobId);
   const destination=state.status==='Returning'?nodes[depot]:job?nodes[job.node]:null;
-  const route=state.route.length&&['Assigned','En route','Arrived','Working','Returning'].includes(state.status)?state.route:job&&p.state.jobs[job.id]==='Unassigned'&&['Available','Completed'].includes(state.status)?findRoute(state.node,job.node):[];
+  const route=state.route.length&&['Assigned','En route','Arrived','Working','Returning'].includes(state.status)?state.route:job&&nodes[job.node]&&p.state.jobs[job.id]==='Unassigned'&&['Available','Completed'].includes(state.status)?findRoute(state.node,job.node):[];
   return {tech:tech!,job,destination,route};
 }
 
 export function DistrictMap(props:Props) {
+  const technicians=teamRecords(props.state);
   const host=useRef<HTMLDivElement>(null),card=useRef<HTMLDivElement>(null),engine=useRef<ReturnType<typeof createDistrict>|null>(null),current=useRef(props);
   const hovered=useRef<string|null>(null);
   const labels=useRef(new Map<string,HTMLButtonElement>()),connectors=useRef(new Map<string,SVGPathElement>()),manual=useRef(false),[error,setError]=useState(false);
@@ -97,7 +101,7 @@ export function DistrictMap(props:Props) {
   },[]);
   useEffect(()=>{manual.current=false;if(props.follow&&props.follow!==activeId)props.onFollow(activeId);},[props.selection?.id]);
   const ref=(id:string)=>(element:HTMLButtonElement|null)=>{if(element)labels.current.set(id,element);else labels.current.delete(id);};
-  const visibleJobs=allJobs(props.state).filter(j=>(j.id!=='willow'||props.state.jobs.oak==='Completed')&&((props.preferences.trade==='All'||j.trade===props.preferences.trade)&&(props.preferences.jobStatus==='All'||props.state.jobs[j.id]===props.preferences.jobStatus)||props.selection?.id===j.id));
+  const visibleJobs=allJobs(props.state).filter(j=>!!nodes[j.node]&&(j.id!=='willow'||props.state.jobs.oak==='Completed')&&((props.preferences.trade==='All'||j.trade===props.preferences.trade)&&(props.preferences.jobStatus==='All'||props.state.jobs[j.id]===props.preferences.jobStatus)||props.selection?.id===j.id));
   function manualZoom(factor:number){manual.current=true;props.onFollow(null);const e=engine.current;if(e){e.cancelCamera();e.camera.zoom=Math.max(.45,Math.min(3,e.camera.zoom*factor));e.camera.updateProjectionMatrix();}}
   return <div className="map-card" ref={card}>
     <div className="map-canvas" ref={host} aria-label={`${props.mode} interactive map of Goob Demo District. Drag to pan; scroll to zoom.`}/>
@@ -105,7 +109,7 @@ export function DistrictMap(props:Props) {
     {!error&&<><svg className="label-connectors" aria-hidden="true">{[...technicians.map(t=>t.id),...visibleJobs.map(j=>j.id),'depot'].map(id=><path key={id} ref={el=>{if(el)connectors.current.set(id,el);else connectors.current.delete(id);}} stroke={technicians.find(t=>t.id===id)?.color??'#817b71'}/>)}</svg><div className="map-label-layer">
       {visibleJobs.map(j=>{const expanded=props.selection?.id===j.id||props.selection?.type==='tech'&&selected.job?.id===j.id;return <button ref={ref(j.id)} key={j.id} data-map-marker={j.id} onMouseEnter={()=>{hovered.current=j.id;}} onMouseLeave={()=>{hovered.current=null;}} title={`${j.address} · ${j.trade}`} className={`map-pin ${expanded?'selected expanded':'compact'}`} onClick={()=>props.onSelect({type:'job',id:j.id})} aria-label={`Select ${j.address}`}><span className="pin-dot" style={{background:tradeColors[j.trade]}}><TradeIcon trade={j.trade} size={15}/></span><span><strong>{j.address}</strong><small>{j.trade}{expanded?` · ${props.state.jobs[j.id]==='Unassigned'&&j.urgent?'Urgent':props.state.jobs[j.id]}`:''}</small></span>{j.urgent&&props.state.jobs[j.id]==='Unassigned'&&<i className="urgent-dot"/>}</button>;})}
       {technicians.map(t=>{const expanded=(!!props.selection&&activeId===t.id)||props.follow===t.id;return <button ref={ref(t.id)} key={t.id} data-map-marker={t.id} onMouseEnter={()=>{hovered.current=t.id;}} onMouseLeave={()=>{hovered.current=null;}} title={`${t.name} · ${t.trade}`} onClick={()=>props.onSelect({type:'tech',id:t.id})} className={`tech-map-label ${expanded?'selected expanded':'compact'}`} aria-label={`Select ${t.name}, ${props.state.technicians[t.id].status}`} style={{borderColor:`${t.color}${expanded?'99':'40'}`}}><TradeIcon trade={t.trade} bubble size={16}/><span><strong>{props.preferences.names?(expanded?t.name:t.name.split(' ')[0]):`Truck ${t.truck}`}<span> · {t.trade}</span></strong>{expanded&&<small>{props.state.technicians[t.id].status} · Truck {t.truck}</small>}</span></button>;})}
-      <button className="depot-label" data-map-marker="depot" ref={ref('depot')} onClick={()=>props.onSelect({type:'tech',id:'maya'})}><Warehouse size={14}/> Goob Depot</button>
+      <button className="depot-label" data-map-marker="depot" ref={ref('depot')} onClick={()=>props.onSelect({type:'tech',id:technicians[0].id})}><Warehouse size={14}/> Goob Depot</button>
     </div></>}
     <div className="map-controls" data-map-obstacle><button title="Zoom in" aria-label="Zoom in" onClick={()=>manualZoom(1.2)}><Plus size={20}/></button><button title="Zoom out" aria-label="Zoom out" onClick={()=>manualZoom(1/1.2)}><Minus size={20}/></button><button title="Reset map view" aria-label="Reset map view" onClick={()=>{manual.current=false;props.onFollow(null);engine.current?.reset(props.mode);}}><LocateFixed size={19}/></button><button className={props.follow?'following':''} aria-label={props.follow?'Stop following technician':'Follow technician'} aria-pressed={!!props.follow} title={props.follow?'Stop following technician':'Follow technician'} onClick={()=>{manual.current=false;props.onFollow(props.follow?null:activeId);}}><Navigation size={18}/></button></div>
   </div>;

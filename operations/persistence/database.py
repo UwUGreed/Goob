@@ -6,6 +6,9 @@ from sqlalchemy.orm import sessionmaker
 
 
 def engine_for(url=None):
+    from pathlib import Path
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=False)
     # Share the teammate's native PostgreSQL URL while retaining an optional
     # separate runtime-role credential for this service. Never fall back to SQLite.
     value = url or os.environ.get("GOOB_API_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
@@ -16,6 +19,8 @@ def engine_for(url=None):
     if parsed.drivername not in {"postgres", "postgresql", "postgresql+psycopg"}:
         raise RuntimeError("The operations API requires PostgreSQL; no SQLite fallback.")
     parsed = parsed.set(drivername="postgresql+psycopg")
+    if not parsed.host or parsed.host.lower() in {"localhost", "127.0.0.1", "::1"}:
+        raise RuntimeError("Configure the Tiger Cloud PostgreSQL endpoint; local databases are not supported.")
     mode = parsed.query.get("sslmode", "require")
     if mode not in {"require", "verify-ca", "verify-full"}:
         raise RuntimeError("Cloud PostgreSQL requires TLS; production requires verify-full.")

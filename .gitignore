@@ -28,6 +28,8 @@ operations/*.sqlite3*
 
 # Python environment and local backups
 .venv/
+.demo-credentials.json
+.portal-test-credentials.json
 backups/
 !.env.example
 

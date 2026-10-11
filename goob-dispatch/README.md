@@ -4,18 +4,28 @@ The existing React + TypeScript + Tailwind dispatch app now supports Google Maps
 
 ## Run and verify
 
+From the repository root, configure the existing Tiger Cloud PostgreSQL URL in the ignored root `.env` (`DATABASE_URL`, or the existing `GOOB_API_DATABASE_URL` runtime-role override). No SQLite, D1, or in-memory database is used by the application.
+
 ```sh
-npm install
-cp .env.example .env.local
-npm run dev
-npm test
-npm run build
-npx playwright test
+python -m alembic -c alembic-backend.ini upgrade head
+python -m scripts.provision_portal_demo
+npm --prefix goob-dispatch install
+npm --prefix goob-dispatch run build
+python -m operations.portal_server
 ```
 
-Fill in the environment values you have, then restart Vite. Empty or placeholder keys leave their integration unconfigured. Without Google credentials the connected fictional district is available; typed commands work without ElevenLabs. On Windows use `npm.cmd` if PowerShell blocks `npm.ps1`.
+Open `http://127.0.0.1:8090`. `/` is public; Launch demo opens `/sign-in`. The server reads Tiger Cloud through the existing SQLAlchemy/domain layer, applies workspace permissions, and persists sessions, customers, jobs, reservations, inventory movements and dispatch status. Database failures produce errors rather than fixture fallback.
 
-The Vite API middleware provides a demo identity only to loopback requests. Production uses Sites authentication and the D1 `DB` binding, with migrations in `drizzle/`. The build emits an authenticated Worker at `dist/server/index.js` with embedded client assets and packaged migrations. A static-only host cannot approve assignments, obtain routes, or issue microphone tokens. The existing private Site is identified in `.openai/hosting.json`.
+The additive `20261011_portal_dispatch` migration adds portal users/sessions, request counters, technicians and visit metadata to the existing public v1 schema. It does not reset or replace `goob`, `goob_foundation`, or existing v1 records. The idempotent development provisioning command creates a separate fictional demo workspace and `goob`; it writes credentials to the ignored root `.demo-credentials.json`. The current demo uses username `goob` and password `goob`; fresh provisioning generates a password. Existing accounts/passwords remain unchanged. Keep this file private; presenters can read it locally. Do not use a password hash to sign in.
+
+For Vite development, run the Python server above alongside `npm run dev` in this folder. Vite proxies `/api` to port 8090. Development accepts `localhost` and `127.0.0.1` origins on ports 5173 and 8090; custom frontend origins require `GOOB_PUBLIC_ORIGIN` on the Python process. Optional `GOOB_BACKEND_URL` changes the proxy target. The build's Worker is a static frontend/API proxy, with no database binding; hosted use requires an HTTPS `GOOB_BACKEND_URL` and matching `GOOB_PUBLIC_ORIGIN`. Production requires `GOOB_ENV=production`, PostgreSQL `sslmode=verify-full` with the provider CA, and HTTPS secure cookies. Existing OIDC bearer authentication remains supported.
+
+```sh
+npm test
+npm run build
+```
+
+Cloud persistence browser verification: set `GOOB_E2E_BASE_URL=http://127.0.0.1:8090` and `GOOB_CLOUD_E2E=1`, then `npm run test:e2e`. This explicitly uses the designated demo account and adds clearly named verification records; providers are disabled in the test. Backend tests require an explicit `TEST_DATABASE_URL`; they create/drop only a unique test schema, never reset application tables. Original fixture browser tests describe the previous standalone preview and are retained separately.
 
 ## Environment configuration
 
@@ -25,7 +35,9 @@ The Vite API middleware provides a demo identity only to loopback requests. Prod
 | `GOOGLE_MAP_ID` | Optional Map ID with published cloud styles for vector 2D and 3D Hybrid. Without it, 2D uses supported raster styling and 3D uses Google's default Hybrid style. |
 | `GOOGLE_MAPS_SERVER_KEY` | Backend Routes API credential. Use a separate Routes-only key for production. |
 | `ELEVENLABS_API_KEY` | Permanent server-only key authorized to create `realtime_scribe` tokens. |
-| `DB` | Hosted D1 binding for dispatch approval records and shared rate limits. |
+| `DATABASE_URL` / `GOOB_API_DATABASE_URL` | Server-only Tiger Cloud PostgreSQL connection, root `.env`. |
+| `GOOB_PUBLIC_ORIGIN` | Exact public origin for cookie-authenticated mutation checks. |
+| `GOOB_BACKEND_URL` | HTTPS backend target for the hosted Worker, or Vite proxy target. |
 
 Real credentials belong in ignored `.env.local` and hosted runtime secrets. `.env.example` contains placeholders only. The browser receives the Google browser key and temporary Scribe tokens; it never receives the permanent ElevenLabs key or a dedicated server routing key.
 
@@ -45,7 +57,7 @@ The default 2D view uses Google's supported raster styling to hide business, med
 
 Routes errors block real-map travel and offer **Fictional map**. This fallback uses its own street graph and says **Simulation — fictional locations**. Google route content is never rendered on the fictional map. Finish or reset an active Google journey before changing providers; switching Google 2D/3D remains available.
 
-Google's estimated driving duration is separate from the accelerated simulation countdown. Vehicles follow decoded route segments by cumulative distance, with movement-derived heading. Routes are requested when the origin/destination changes, not each frame. Return travel requests a new route. Google route responses remain in active browser memory, with `no-store` responses, and are not persisted in D1, local storage, logs, or fixtures. See [routing policies](https://developers.google.com/maps/documentation/routes/policies) and [service terms](https://cloud.google.com/maps-platform/terms/maps-service-terms).
+Google's estimated driving duration is separate from the accelerated simulation countdown. Vehicles follow decoded route segments by cumulative distance, with movement-derived heading. Routes are requested when the origin/destination changes, not each frame. Return travel requests a new route. Google route responses remain in active browser memory, with `no-store` responses, and are not persisted in PostgreSQL, local storage, logs, or fixtures. See [routing policies](https://developers.google.com/maps/documentation/routes/policies) and [service terms](https://cloud.google.com/maps-platform/terms/maps-service-terms).
 
 ## Real geography, fictional operations
 
@@ -92,7 +104,9 @@ A single requestAnimationFrame clock drives distance-based vehicle interpolation
 - `src/integrations/`: geography, route decoding/interpolation, API client, dispatch coordinator, validated command parser.
 - `GoogleDispatchMap.tsx`, `VoiceCommands.tsx`: Google adapters and official Scribe SDK, with cleanup and error handling.
 - `mapScene.ts`, `mapLayout.ts`, `DistrictMap.tsx`: retained architectural miniature and screen-space label placement.
-- `server/`, `drizzle/`: protected endpoints, optimistic writes, shared limits, loopback preview, Worker, migrations.
+- `server/`: optional static frontend/backend proxy Worker.
+- `../operations/api_v1/portal*.py`, `../operations/domain/desk.py`: authenticated cloud adapters and persistent sessions.
+- `../operations/migrations/`: additive PostgreSQL migrations.
 
 Unit checks cover commands, interpolation, simulation, identity/origin checks, token limits, routing fields, duplicate/concurrent assignments, and rejected inventory/route injection. Browser checks cover the complete journey, mobile layout, preferences, marker bounds, follow/manual interruption, adapter synchronization, API errors, denied permission, and microphone cleanup. Test adapters prevent provider calls even when local credentials are configured. Playwright uses installed Microsoft Edge on Windows, software WebGL, and one worker; adapt the executable path for another machine.
 

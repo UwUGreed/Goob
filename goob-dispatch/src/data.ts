@@ -22,3 +22,5 @@ export const depot = '0-3';
 
 export const customerFixtures=jobs.map(j=>({id:j.id,name:j.customer,email:'',phone:'',address:j.address}));
 export const stockFixtures=inventory.map((i,n)=>({...i,id:'part-'+n,sku:'GOOB-'+(100+n),trade:technicians.find(t=>t.truck===i.truck)!.trade,threshold:2}));
+
+export const teamRecords=(state:import('./types').Simulation)=>state.roster??technicians;

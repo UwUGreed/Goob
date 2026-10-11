@@ -1,3 +1,4 @@
+import { teamRecords } from '../data';
 import { allJobs } from '../schedule';
 import { useEffect, useRef, useState } from 'react';
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader';
@@ -11,7 +12,7 @@ import type { Preferences, Selection, Simulation, Trade } from '../types';
 type Props={state:Simulation;motion:MotionSource;preferences:Preferences;selection:Selection;onSelect:(s:Selection)=>void;mode:'2D'|'3D';follow:string|null;onFollow:(id:string|null)=>void;reduced:boolean;config:IntegrationConfig;on2DFallback:(message:string)=>void;onMapError:(message:string)=>void};
 type Marker2={point:GeoPoint;visible:boolean;selected:boolean;button:HTMLButtonElement;tooltip:HTMLDivElement;heading:number;tech:boolean};
 type Marker3={marker:google.maps.maps3d.Marker3DInteractiveElement;pin:google.maps.marker.PinElement};
-const definitions=[...technicians.map(t=>({id:t.id,tech:true,trade:t.trade,name:t.name,node:t.start})),...jobs.map(j=>({id:j.id,tech:false,trade:j.trade,name:j.address,node:j.node})),{id:'custom-destination',tech:false,trade:'Plumbing' as Trade,name:'New visit',node:'3-2'},{id:'depot',tech:false,trade:'HVAC' as Trade,name:'Goob Depot',node:depot}];
+const definitionsFor=(state:Simulation)=>[...teamRecords(state).map(t=>({id:t.id,tech:true,trade:t.trade,name:t.name,node:t.start})),...allJobs(state).filter(j=>!!realStops[j.node]).map(j=>({id:j.id,tech:false,trade:j.trade,name:j.address,node:j.node})),{id:'custom-destination',tech:false,trade:'Plumbing' as Trade,name:'New visit',node:'3-2'},{id:'depot',tech:false,trade:'HVAC' as Trade,name:'Goob Depot',node:depot}];
 // Inline styling is supported on raster maps without a Map ID. Vector/3D
 // maps use the published cloud style associated with the configured Map ID.
 const quietStreets:google.maps.MapTypeStyle[]=[
@@ -26,15 +27,16 @@ const quietStreets:google.maps.MapTypeStyle[]=[
 ];
 const vehicleGlyph='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><path d="M3 7h13v13H3zM16 11h5l4 5v4h-9z" fill="white"/><path d="M18 12h3l2 4h-5z" fill="#483349"/><circle cx="8" cy="21" r="3" fill="#483349" stroke="white"/><circle cx="21" cy="21" r="3" fill="#483349" stroke="white"/></svg>');
 let configuredKey='';
-function selectedTech(p:Props){return p.selection?.type==='tech'?technicians.find(t=>t.id===p.selection!.id)!:technicians.find(t=>p.state.technicians[t.id].jobId===p.selection?.id)??technicians.find(t=>t.trade===allJobs(p.state).find(j=>j.id===p.selection?.id)?.trade)??technicians[0];}
+function selectedTech(p:Props){const technicians=teamRecords(p.state);return p.selection?.type==='tech'?(technicians.find(t=>t.id===p.selection!.id)??technicians[0]):technicians.find(t=>p.state.technicians[t.id].jobId===p.selection?.id)??technicians.find(t=>t.trade===allJobs(p.state).find(j=>j.id===p.selection?.id)?.trade)??technicians[0];}
 function position(p:Props,id:string){const t=p.state.technicians[id],progress=t.replay?.progress??t.progress;return t.driving?geoPosition(t.driving.coordinates,p.reduced?Math.floor(progress*15)/15:progress):{...realStops[t.node],heading:0};}
 function tradeIcon(trade:Trade){return new URL(`/trade-${trade.toLowerCase()}.svg`,location.origin).href;}
 export function GoogleDispatchMap(props:Props){
+ const technicians=teamRecords(props.state),definitions=definitionsFor(props.state);
   const host2=useRef<HTMLDivElement>(null),host3=useRef<HTMLDivElement>(null),map2=useRef<google.maps.Map|null>(null),map3=useRef<google.maps.maps3d.Map3DElement|null>(null),overlay=useRef<google.maps.OverlayView|null>(null),current=useRef(props);current.current=props;
   const markers2=useRef(new Map<string,Marker2>()),markers3=useRef(new Map<string,Marker3>()),lines2=useRef<google.maps.Polyline[]>([]),lines3=useRef<google.maps.maps3d.Polyline3DElement[]>([]);
   const [epoch,setEpoch]=useState(0),[loaded2,setLoaded2]=useState(false),[loaded3,setLoaded3]=useState(false),[loading,setLoading]=useState('Loading Google Maps…');
   const selectedKey=useRef(''),routeKey=useRef(''),fittedKey=useRef(''),manual=useRef(false),threeReady=useRef(false),hovered=useRef<string|null>(null),fitRef=useRef<(all?:boolean)=>void>(()=>{});
-  function choose(id:string,tech:boolean){if(id==='custom-destination'){const selected=current.current.selection;if(selected?.type==='job')current.current.onSelect(selected);return;}current.current.onSelect({type:tech||id==='depot'?'tech':'job',id:id==='depot'?'maya':id});}
+  function choose(id:string,tech:boolean){if(id==='custom-destination'){const selected=current.current.selection;if(selected?.type==='job')current.current.onSelect(selected);return;}current.current.onSelect({type:tech||id==='depot'?'tech':'job',id:id==='depot'?technicians[0].id:id});}
   function build2(){
     const layer=document.createElement('div');layer.className='google-pin-layer';
     for(const d of definitions){
@@ -71,7 +73,7 @@ export function GoogleDispatchMap(props:Props){
       const pin=new PinElement({background:tradeColors[d.trade],borderColor:'#fffdf5',glyphSrc:d.tech?vehicleGlyph:tradeIcon(d.trade),scale:1});marker.append(pin);marker.addEventListener('gmp-click',()=>choose(d.id,d.tech));
       marker.addEventListener('mouseenter',()=>{if(!current.current.selection)marker.label=`${d.name} · ${d.trade}`;});marker.addEventListener('mouseleave',()=>{if(current.current.selection?.id!==d.id)marker.label=null;});map3.current!.append(marker);markers3.current.set(d.id,{marker,pin});}
   }
-  function pointsForFit(all=false):GeoPoint[]{const p={...current.current,state:current.current.motion.getState()},t=selectedTech(p),ts=p.state.technicians[t.id],job=allJobs(p.state).find(j=>j.id===(p.selection?.type==='job'?p.selection.id:ts.jobId));const points:GeoPoint[]=all||!p.selection?Object.values(realStops):[];if(ts.driving)points.push(...ts.driving.coordinates);else if(p.state.preview?.route)points.push(...p.state.preview.route.coordinates);points.push(position(p,t.id));if(ts.status==='Returning')points.push(realStops[depot]);else if(job)points.push(realStops[job.node]);if(points.length===1)points.push(...Object.values(realStops));return points;}
+  function pointsForFit(all=false):GeoPoint[]{const p={...current.current,state:current.current.motion.getState()},t=selectedTech(p),ts=p.state.technicians[t.id],job=allJobs(p.state).find(j=>j.id===(p.selection?.type==='job'?p.selection.id:ts.jobId));const points:GeoPoint[]=all||!p.selection?Object.values(realStops):[];if(ts.driving)points.push(...ts.driving.coordinates);else if(p.state.preview?.route)points.push(...p.state.preview.route.coordinates);points.push(position(p,t.id));if(ts.status==='Returning')points.push(realStops[depot]);else if(job&&realStops[job.node])points.push(realStops[job.node]);if(points.length===1)points.push(...Object.values(realStops));return points;}
   function fit(all=false){
     const p=current.current,points=pointsForFit(all);if(!points.length||!host2.current||!host3.current)return;const box=new google.maps.LatLngBounds();points.forEach(point=>box.extend(point));
     if(p.mode==='2D'||!map3.current){map2.current?.fitBounds(box,{top:62,left:50,right:85,bottom:65});return;}

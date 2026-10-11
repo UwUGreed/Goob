@@ -15,7 +15,7 @@ def validate_data(kind, data):
         raise Problem(str(exc), 422) from exc
 
 
-def create(db, actor, kind, payload):
+def create(db, actor, kind, payload, identifier=None):
     actor.allow(payload["branch_id"], "write")
     permitted_links = {
         "contacts": {"parent_id"},
@@ -27,7 +27,7 @@ def create(db, actor, kind, payload):
         if payload.get(field) and field not in permitted_links.get(kind, set()):
             raise Problem("Relationship is not supported for this record type.", 422)
     data = validate_data(kind, payload.get("data", {}))
-    row = Record(tenant_id=actor.tenant, id=uid(), kind=kind, **(payload | {"data": data}))
+    row = Record(tenant_id=actor.tenant, id=identifier or uid(), kind=kind, **(payload | {"data": data}))
     hierarchy = {"contacts": "customers", "properties": "customers", "equipment": "properties"}
     if kind in hierarchy:
         parent = record(db, actor, row.parent_id, hierarchy[kind])

@@ -5,6 +5,14 @@ The repository also contains the authenticated `/api/v1` backend and the standal
 97-table foundation. Their records remain separate; see
 [database ownership and integration](docs/backend/DATABASE-INTEGRATION.md).
 
+The complete Dispatch application and public sign-in portal use the existing
+SQLAlchemy v1 backend. See [portal startup and demo credentials](goob-dispatch/README.md).
+Build with `npm --prefix goob-dispatch run build`, then run
+`python -m operations.portal_server` and open `http://127.0.0.1:8090`.
+The server loads the ignored root `.env` Tiger Cloud connection. This portal uses
+an additive migration and a separate fictional demo workspace; legacy schemas
+and records are retained. There is no local database fallback.
+
 ## Run the website with the cloud database
 
 ```sh

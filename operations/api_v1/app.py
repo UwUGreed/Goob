@@ -3,7 +3,7 @@ import os
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, Header, Query
+from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -89,7 +89,9 @@ class MessageDraft(Strict):
 
 def create_app(engine=None, verifier=None, gemini=None):
     engine = engine if engine is not None else engine_for()
-    verify = verifier or OIDCVerifier()
+    def unavailable_verifier(token):
+        raise Problem("OIDC bearer authentication is not configured.", 401)
+    verify = verifier or (OIDCVerifier() if os.environ.get("OIDC_ISSUER") else unavailable_verifier)
     factory = sessions(engine)
     provider = gemini or Gemini()
     app = FastAPI(
@@ -109,6 +111,20 @@ def create_app(engine=None, verifier=None, gemini=None):
     @app.middleware("http")
     async def request_id(request, call_next):
         request.state.request_id = str(uuid4())
+        if request.method in {"POST", "PATCH", "DELETE"} and not request.headers.get("authorization"):
+            origin = request.headers.get("origin")
+            origins = {str(request.base_url).rstrip("/")}
+            configured = os.environ.get("GOOB_PUBLIC_ORIGIN")
+            if configured:
+                origins.add(configured.rstrip("/"))
+            # Vite forwards same-origin browser requests to the Python server.
+            # Both loopback names are supported for the two local application ports.
+            if os.environ.get("GOOB_ENV") != "production":
+                origins.update(f"http://{host}:{port}" for host in ("localhost", "127.0.0.1") for port in (5173, 8090))
+            if request.headers.get("sec-fetch-site") == "cross-site" or (origin and origin not in origins):
+                return JSONResponse(status_code=403, content={"error": "Cross-origin request rejected."})
+            if "application/json" not in request.headers.get("content-type", ""):
+                return JSONResponse(status_code=415, content={"error": "JSON requests are required."})
         length = request.headers.get("content-length")
         if length and (not length.isdigit() or int(length) > 1000000):
             return JSONResponse(status_code=413, content={"error": "Request exceeds 1 MB."})
@@ -167,11 +183,15 @@ def create_app(engine=None, verifier=None, gemini=None):
             yield db
 
     def actor(
+        request: Request,
         db=Depends(session),
         credentials=Depends(HTTPBearer(auto_error=False)),
         x_tenant_id: str = Header(default=""),
     ):
-        if credentials is None or not x_tenant_id:
+        if credentials is None:
+            from operations.api_v1.portal_auth import session_user
+            return session_user(db, request)[1]
+        if not x_tenant_id:
             raise Problem("Bearer authentication and X-Tenant-ID are required.", 401)
         return identity.actor_for(db, x_tenant_id, verify(credentials.credentials))
 
@@ -810,4 +830,6 @@ def create_app(engine=None, verifier=None, gemini=None):
 
         return mutate(db, user, idempotency_key, "message:draft", body.model_dump(), run)
 
+    from operations.api_v1.portal import register_portal
+    register_portal(app, factory, session, actor)
     return app

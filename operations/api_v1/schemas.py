@@ -11,6 +11,7 @@ class Strict(BaseModel):
 
 
 class Customer(Strict):
+    primary_property_id: str | None = None
     account_type: Literal["residential", "commercial"] = "residential"
     email: str = Field(default="", max_length=254)
     phone: str = Field(default="", max_length=80)
@@ -58,6 +59,7 @@ class Job(Strict):
 
 
 class SKU(Strict):
+    trade: Trade = "Plumbing"
     barcode: str = Field(default="", max_length=150)
     unit: Literal["each"] = "each"
     cost_cents: int = Field(ge=0, default=0)

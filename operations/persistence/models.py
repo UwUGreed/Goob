@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from sqlalchemy import (
     Boolean,
+    BigInteger,
     CheckConstraint,
     Date,
     DateTime,
@@ -280,3 +281,55 @@ class Outbox(Scoped, Base):
     payload: Mapped[dict] = mapped_column(JSONB)
     state: Mapped[str] = mapped_column(String, default="draft")
     __table_args__ = (branch_fk(),)
+
+
+class PortalUser(Base):
+    __tablename__ = "portal_users_v1"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=uid)
+    identifier: Mapped[str] = mapped_column(String, unique=True)
+    password_hash: Mapped[str]
+    tenant_id: Mapped[str]
+    subject: Mapped[str]
+    demo: Mapped[bool] = mapped_column(Boolean, default=False)
+    __table_args__ = (ForeignKeyConstraint(["tenant_id", "subject"], ["memberships_v1.tenant_id", "memberships_v1.subject"]),)
+
+
+class PortalSession(Base):
+    __tablename__ = "portal_sessions_v1"
+    token_hash: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("portal_users_v1.id"))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class LoginAttempt(Base):
+    __tablename__ = "portal_login_attempts_v1"
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class DispatchTechnician(Scoped, Base):
+    __tablename__ = "dispatch_technicians_v1"
+    name: Mapped[str]
+    trade: Mapped[str]
+    location_id: Mapped[str]
+    node: Mapped[str] = mapped_column(String, default="0-3")
+    status: Mapped[str] = mapped_column(String, default="Available")
+    job_id: Mapped[str | None] = mapped_column(String)
+    __table_args__ = (branch_fk(), record_fk("location_id"), record_fk("job_id"), CheckConstraint("trade IN ('Plumbing', 'HVAC', 'Electrical')"))
+
+
+class DispatchVisit(Scoped, Base):
+    __tablename__ = "dispatch_visits_v1"
+    job_id: Mapped[str]
+    technician_id: Mapped[str | None] = mapped_column(String)
+    status: Mapped[str] = mapped_column(String, default="Unassigned")
+    node: Mapped[str] = mapped_column(String, default="3-2")
+    description: Mapped[str] = mapped_column(String, default="")
+    urgent: Mapped[bool] = mapped_column(Boolean, default=False)
+    requested: Mapped[str] = mapped_column(String, default="Today")
+    date: Mapped[str | None] = mapped_column(String)
+    start: Mapped[int | None] = mapped_column(BigInteger)
+    end: Mapped[int | None] = mapped_column(BigInteger)
+    travel_start: Mapped[int | None] = mapped_column(BigInteger)
+    __table_args__ = (branch_fk(), record_fk("job_id"), UniqueConstraint("tenant_id", "job_id"), ForeignKeyConstraint(["tenant_id", "technician_id"], ["dispatch_technicians_v1.tenant_id", "dispatch_technicians_v1.id"]), CheckConstraint("status IN ('Unassigned','Assigned','En route','Arrived','Working','Completed')"))

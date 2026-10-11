@@ -1,10 +1,11 @@
+import { teamRecords } from '../data';
 ﻿import { ArrowRight, Truck } from 'lucide-react';
 import { technicians } from '../data';
 import { allJobs, bookingsFor, demoDate, demoNow, jobLabel, matchesSearch, stamp, timeLabel } from '../schedule';
 import { TradeIcon } from './Icons';
 import type { Preferences, ScheduleSlot, Selection, Simulation } from '../types';
 export function DispatchSchedule({state,preferences,selection,onSelect,day,search,slot,techId,fullDay,onFullDay}:{state:Simulation;preferences:Preferences;selection:Selection;onSelect:(s:Selection)=>void;day:string;search:string;slot:ScheduleSlot|null;techId:string;fullDay:boolean;onFullDay:()=>void}){
- const jobs=allJobs(state),queue=jobs.filter(j=>state.jobs[j.id]==='Unassigned'&&(j.id!=='willow'||state.jobs.oak==='Completed')&&(preferences.trade==='All'||j.trade===preferences.trade)&&matchesSearch(`${jobLabel(j.id,state).number} ${j.title} ${jobLabel(j.id,state).issue} ${j.address} ${j.trade}`,search));
+ const technicians=teamRecords(state);const jobs=allJobs(state),queue=jobs.filter(j=>state.jobs[j.id]==='Unassigned'&&(j.id!=='willow'||state.jobs.oak==='Completed')&&(preferences.trade==='All'||j.trade===preferences.trade)&&matchesSearch(`${jobLabel(j.id,state).number} ${j.title} ${jobLabel(j.id,state).issue} ${j.address} ${j.trade}`,search));
  const visibleTeam=technicians.filter(t=>(preferences.trade==='All'||t.trade===preferences.trade)&&(!preferences.available||['Available','Completed'].includes(state.technicians[t.id].status))&&((matchesSearch(`${t.name} ${t.trade} ${t.truck}`,search))||queue.some(j=>j.id===selection?.id&&j.trade===t.trade)));
  const start=stamp(day,9),end=stamp(day,fullDay?18:14),pct=(v:number)=>(v-start)/(end-start)*100,style=(a:number,b:number)=>({left:`${Math.max(0,pct(a))}%`,width:`${Math.max(0,Math.min(100,pct(b))-Math.max(0,pct(a)))}%`});
  const selectedJob=selection?.type==='job'?jobs.find(j=>j.id===selection.id):undefined;

@@ -86,7 +86,7 @@ def main():
     try:
         with httpx.Client(base_url=args.url, timeout=20, follow_redirects=False) as client:
             result = check(client, headers, args.job_id)
-    except httpx.HTTPError, ValueError:
+    except (httpx.HTTPError, ValueError):
         print(
             json.dumps(
                 {

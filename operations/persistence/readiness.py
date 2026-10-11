@@ -4,7 +4,7 @@ from sqlalchemy import literal, select, text, union_all
 
 from operations.persistence.models import Base
 
-SCHEMA_REVISION = "2558cea32be8"
+SCHEMA_REVISION = "20261011_portal_dispatch"
 
 
 def check_schema(connection):

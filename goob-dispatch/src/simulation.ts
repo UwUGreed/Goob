@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { depot, jobs, technicians, stockFixtures, customerFixtures } from './data';
+import { depot, jobs, technicians, stockFixtures, customerFixtures, teamRecords } from './data';
 import { findRoute, routeLength } from './routing';
 import { allJobs, proposedSlot, slotAllowed } from './schedule';
 import type { Job, Customer, StockItem, ScheduleSlot, Simulation, TechState } from './types';
@@ -8,12 +8,12 @@ export type Action = {type:'customer';customer:Customer}|{type:'stock';item:Stoc
 export function initialState():Simulation {
   return {customers:customerFixtures,stock:stockFixtures,speed:1,technicians:Object.fromEntries(technicians.map(t=>[t.id,{status:t.id==='jordan'?'Working':'Available',node:t.start,jobId:t.id==='jordan'?'cedar':undefined,route:[],progress:0,running:false,duration:0}])),jobs:Object.fromEntries(jobs.map(j=>[j.id,j.id==='cedar'?'Working':'Unassigned']))};
 }
-export const stockRecords=(state:Simulation)=>state.stock??stockFixtures;
-export function reservedCount(state:Simulation,truck:string,part:string,exclude?:string){return Object.entries(state.technicians).filter(([id,t])=>technicians.find(x=>x.id===id)?.truck===truck&&t.jobId!==exclude&&['Assigned','En route','Arrived','Working'].includes(t.status)&&allJobs(state).find(j=>j.id===t.jobId)?.part===part).length;}
+export const stockRecords=(state:Simulation):StockItem[]=>state.stock??stockFixtures;
+export function reservedCount(state:Simulation,truck:string,part:string,exclude?:string){if(state.reservations)return state.reservations.filter(r=>r.truck===truck&&r.part===part&&r.jobId!==exclude).reduce((n,r)=>n+r.quantity,0);return Object.entries(state.technicians).filter(([id,t])=>teamRecords(state).find(x=>x.id===id)?.truck===truck&&t.jobId!==exclude&&['Assigned','En route','Arrived','Working'].includes(t.status)&&allJobs(state).find(j=>j.id===t.jobId)?.part===part).length;}
 export function partsReady(state:Simulation,truck:string,part:string,jobId?:string){return stockRecords(state).some(i=>i.truck===truck&&i.part===part&&i.quantity-reservedCount(state,truck,part,jobId)>0);}
 export function eligible(state:Simulation,techId:string,jobId:string) {
-  const tech=technicians.find(t=>t.id===techId),job=allJobs(state).find(j=>j.id===jobId),ts=state.technicians[techId];
-  return !!(tech && job && ts && (ts.status==='Available'||ts.status==='Completed') && state.jobs[jobId]==='Unassigned' && tech.trade===job.trade && partsReady(state,tech.truck,job.part,jobId) && (jobId!=='willow'||state.jobs.oak==='Completed'));
+  const tech=teamRecords(state).find(t=>t.id===techId),job=allJobs(state).find(j=>j.id===jobId),ts=state.technicians[techId];
+  return !!(tech && job && ts && (ts.status==='Available'||ts.status==='Completed') && state.jobs[jobId]==='Unassigned' && tech.trade===job.trade && (!state.databaseBacked||tech.branchId===job.branchId) && (job.requirements?job.requirements.every(n=>stockRecords(state).some(i=>i.truck===tech.truck&&i.part===n.part&&i.skuId===n.skuId&&i.locationId===tech.locationId&&i.quantity-reservedCount(state,tech.truck,n.part,jobId)>=n.quantity)):partsReady(state,tech.truck,job.part,jobId)) && (jobId!=='willow'||state.jobs.oak==='Completed'));
 }
 function travel(ts:TechState,destination:string,driving?:DrivingRoute):TechState {
   const route=findRoute(ts.node,destination);
@@ -40,7 +40,7 @@ export function reducer(state:Simulation,action:Action):Simulation {
   }
   if(action.type==='replace')return action.state;
   if(action.type==='preview')return{...state,preview:action.preview};
-  if(action.type==='reset') return initialState();
+  if(action.type==='reset') return state.databaseBacked?{...state,technicians:Object.fromEntries(Object.entries(state.technicians).map(([id,t])=>[id,{...t,running:false,replay:undefined}]))}:initialState();
   if(action.type==='speed') return [1,5,10].includes(action.speed)?{...state,speed:action.speed}:state;
   if(action.type==='tick') {
     const next={...state,technicians:{...state.technicians},jobs:{...state.jobs}};
@@ -87,8 +87,8 @@ export function reducer(state:Simulation,action:Action):Simulation {
   return {...state,technicians:{...state.technicians,[action.techId]:updated},jobs:jobStates};
 }
 export type MotionSource={getState:()=>Simulation;subscribe:(listener:(state:Simulation,dt:number,now:number)=>void)=>()=>void};
-export function useSimulation() {
-  const [state,setState]=useState(initialState),live=useRef(state),listeners=useRef(new Set<(state:Simulation,dt:number,now:number)=>void>());
+export function useSimulation(seed?:Simulation) {
+  const [state,setState]=useState(()=>seed??initialState()),live=useRef(state),listeners=useRef(new Set<(state:Simulation,dt:number,now:number)=>void>());
   const motion=useRef<MotionSource>({getState:()=>live.current,subscribe:listener=>{listeners.current.add(listener);return()=>{listeners.current.delete(listener);};}}).current;
   const dispatch=useCallback((action:Action)=>{live.current=reducer(live.current,action);setState(live.current);},[]);
   useEffect(()=>{
