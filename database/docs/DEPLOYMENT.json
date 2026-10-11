@@ -1,0 +1,11 @@
+{
+  "status": "deployed",
+  "tables": 97,
+  "foreign_keys": 291,
+  "user_triggers": 150,
+  "reports_compiled": 6,
+  "pending_migrations": [],
+  "existing_goob_tables_unchanged": 12,
+  "seed_reset_dev_guard": "still enforced",
+  "demo_seeded": false
+}

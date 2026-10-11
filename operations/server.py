@@ -5,12 +5,13 @@ from urllib.parse import urlsplit
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from operations.db import connect, seed
+from operations.config import database_target
 from operations.modules import crm, agreements, inventory, workflow
 from operations.modules.registry import REGISTRY, guard, configure
 
 ROOT = Path(__file__).parent
 FRONTEND = ROOT.parent/'goob-dispatch'/'dist'
-DATABASE = os.environ.get('GOOB_DEMO_DB', str(ROOT/'demo.sqlite3'))
+DATABASE = database_target()
 
 def snapshot(db, tenant, role):
     result = {'simulation':True,'registry':REGISTRY}
@@ -58,7 +59,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path not in ['/api/state','/api/export']:
             return self.reply(404,{'error':'Not found'})
-        db = connect(DATABASE)
+        db = connect(DATABASE, initialize=False)
         try:
             self.reply(200,snapshot(db,'demo',self.headers.get('X-Demo-Role','dispatcher')))
         except ValueError as error:
@@ -70,7 +71,7 @@ class Handler(BaseHTTPRequestHandler):
         # Same-origin local demo only. Never accept browser cross-origin mutations.
         if self.headers.get('Sec-Fetch-Site') == 'cross-site' or (self.headers.get('Origin') and self.headers['Origin'] != 'http://'+self.headers.get('Host','')):
             return self.reply(403,{'error':'Cross-origin command rejected'})
-        db = connect(DATABASE)
+        db = connect(DATABASE, initialize=False)
         try:
             length = int(self.headers.get('Content-Length','0'))
             if length < 0 or length > 4096:

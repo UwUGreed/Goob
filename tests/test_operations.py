@@ -33,7 +33,7 @@ class OperationsTests(unittest.TestCase):
             with self.assertRaises(ValueError): agreements.eligibility(self.db,'demo',job,'2026-10-10')
     def test_expired_and_overlapping(self):
         with self.assertRaises(ValueError): agreements.eligibility(self.db,'demo',workflow.job(self.db,'demo'),'2030-01-01')
-        self.db.execute("INSERT INTO agreements SELECT tenant,'overlap',equipment,property,trade,start,end,discount,terms FROM agreements")
+        self.db.execute("INSERT INTO agreements SELECT tenant,'overlap',equipment,property,trade,start,\"end\",discount,terms FROM agreements")
         with self.assertRaises(ValueError): self.proposal()
     def test_permissions_and_tenant_isolation(self):
         p=self.proposal()

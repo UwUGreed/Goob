@@ -2,7 +2,7 @@ def balance(db, tenant, agreement):
     return db.execute('SELECT COALESCE(SUM(amount),0) FROM benefits WHERE tenant=? AND agreement=?',(tenant,agreement)).fetchone()[0]
 
 def eligibility(db, tenant, job, day):
-    matches = db.execute('SELECT * FROM agreements WHERE tenant=? AND equipment=? AND property=? AND trade=? AND start<=? AND end>=?',(tenant,job['equipment'],job['property'],job['trade'],day,day)).fetchall()
+    matches = db.execute('SELECT * FROM agreements WHERE tenant=? AND equipment=? AND property=? AND trade=? AND start<=? AND "end">=?',(tenant,job['equipment'],job['property'],job['trade'],day,day)).fetchall()
     if len(matches) != 1:
         raise ValueError('Coverage missing, expired or overlapping; staff review required.')
     agreement = dict(matches[0])

@@ -25,3 +25,8 @@ coverage/
 __pycache__/
 *.pyc
 operations/*.sqlite3*
+
+# Python environment and local backups
+.venv/
+backups/
+!.env.example
