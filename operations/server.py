@@ -38,6 +38,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlsplit(self.path).path
+        if path == '/api/health':
+            db = None
+            try:
+                db = connect(DATABASE, initialize=False)
+                db.execute('SELECT 1 FROM tenants LIMIT 1')
+                return self.reply(200, {'status': 'ok'})
+            except Exception:
+                return self.reply(503, {'status': 'unavailable'})
+            finally:
+                if db is not None:
+                    db.close()
         legacy = {'/operations':'index.html', '/app.js':'app.js', '/style.css':'style.css'}
         if path == '/' and not (FRONTEND/'index.html').is_file():
             legacy['/'] = 'index.html'
@@ -69,7 +80,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         # Same-origin local demo only. Never accept browser cross-origin mutations.
-        if self.headers.get('Sec-Fetch-Site') == 'cross-site' or (self.headers.get('Origin') and self.headers['Origin'] != 'http://'+self.headers.get('Host','')):
+        if self.headers.get('Sec-Fetch-Site') == 'cross-site' or (self.headers.get('Origin') and self.headers['Origin'] != os.environ.get('GOOB_PUBLIC_ORIGIN', 'http://'+self.headers.get('Host',''))):
             return self.reply(403,{'error':'Cross-origin command rejected'})
         db = connect(DATABASE, initialize=False)
         try:

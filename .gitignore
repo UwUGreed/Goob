@@ -30,3 +30,10 @@ operations/*.sqlite3*
 .venv/
 backups/
 !.env.example
+
+# Deployment credentials and archives
+*.pem
+*.key
+*.dump
+*.tar.gz
+*.htpasswd

@@ -69,3 +69,9 @@ or implicitly target the shared cloud-backed website. Then run:
 [Team integration handoff](docs/backend/TEAM-HANDOFF.md) ·
 [Database foundation](database/README.md) ·
 [Original dispatch journey](goob-dispatch/README.md)
+
+## Vultr staging deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the Ubuntu 24.04 app server, Nginx, systemd,
+and GitHub Actions deployment using the existing Tiger Cloud database.
+No local database server is installed and existing cloud records are preserved.
