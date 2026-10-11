@@ -41,3 +41,14 @@ class CloudDeploymentTargetTests(unittest.TestCase):
         config['GOOB_API_DATABASE_URL'] = 'postgresql://other/db'
         with self.assertRaises(RuntimeError):
             module.validate_target(config)
+
+    def test_hackathon_requires_explicit_opt_in_and_encryption(self):
+        config = self.config()
+        for key in ('DATABASE_URL', 'GOOB_DATABASE_URL'):
+            config[key] = config[key].split('?')[0] + '?sslmode=require'
+        config.update(GOOB_ENV='hackathon', GOOB_HACKATHON_UNVERIFIED_TLS='1')
+        self.assertEqual(module.validate_target(config), ('cloud.example', '12345', 'tsdb'))
+        for changes in ({'GOOB_ENV': 'production'}, {'GOOB_HACKATHON_UNVERIFIED_TLS': '0'},
+                        {'DATABASE_URL': config['DATABASE_URL'].replace('require', 'disable')}):
+            with self.subTest(changes=changes), self.assertRaises(RuntimeError):
+                module.validate_target(dict(config, **changes))

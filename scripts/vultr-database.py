@@ -22,7 +22,11 @@ def validate_target(values):
         actual = tuple(params.get(key, '') for key in ('host', 'port', 'dbname'))
         if actual != expected:
             raise RuntimeError('Database URL does not match the explicit Tiger Cloud target.')
-        if params.get('sslmode') != 'verify-full' or not params.get('sslrootcert'):
+        hackathon_tls = (values.get('GOOB_ENV') == 'hackathon' and
+                         values.get('GOOB_HACKATHON_UNVERIFIED_TLS') == '1' and
+                         params.get('sslmode') == 'require' and
+                         not params.get('sslrootcert'))
+        if not hackathon_tls and (params.get('sslmode') != 'verify-full' or not params.get('sslrootcert')):
             raise RuntimeError('Use verify-full and an explicit trusted CA for Tiger Cloud.')
     if values.get('GOOB_API_DATABASE_URL'):
         raise RuntimeError('Remove API URL override for this shared staging migration.')
@@ -52,7 +56,15 @@ def main():
     elif command == 'migrate':
         backup = Path(sys.argv[2])
         # Keep credentials out of process arguments and logs.
-        env = dict(os.environ, PGDATABASE=os.environ['DATABASE_URL'])
+        params = parse_dsn(os.environ['DATABASE_URL'])
+        env = dict(os.environ)
+        for field, variable in (('host', 'PGHOST'), ('port', 'PGPORT'),
+                                ('dbname', 'PGDATABASE'), ('user', 'PGUSER'),
+                                ('password', 'PGPASSWORD'), ('sslmode', 'PGSSLMODE'),
+                                ('sslrootcert', 'PGSSLROOTCERT')):
+            env.pop(variable, None)
+            if field in params:
+                env[variable] = params[field]
         subprocess.run(['/usr/lib/postgresql/18/bin/pg_dump', '--format=custom', '--file', str(backup)], env=env, check=True)
         subprocess.run([sys.executable, '-m', 'operations.database', 'init'], check=True)
         subprocess.run([sys.executable, '-m', 'database.cli', 'migrate', '--apply',

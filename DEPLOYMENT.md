@@ -1,5 +1,16 @@
 # Tiger staging on Vultr
 
+## Temporary hackathon deployment
+
+The temporary HTTPS address is https://45.76.253.215.sslip.io, with the staging
+password gate retained. For this short-lived demo, `/etc/tiger/tiger.env` uses
+`GOOB_ENV=hackathon`, `GOOB_HACKATHON_UNVERIFIED_TLS=1`, and both database URLs
+use `sslmode=require` without `sslrootcert`. This keeps database traffic encrypted
+but skips certificate identity verification. Production deployments still require
+`verify-full` and a trusted CA. Restore those settings when ending the demo.
+The website service uses `HOME=/var/www/tiger` so libpq does not probe client
+certificate files under the home directory blocked by systemd's `ProtectHome`.
+
 This deploys the existing website, without redesigning it. Target: Ubuntu 24.04,
 45.76.253.215, hostname tiger-db, 2 vCPU / 4 GB. These instructions target a
 fresh dedicated server. Adding these files alone does not provision a server.
