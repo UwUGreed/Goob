@@ -40,7 +40,7 @@ export function reducer(state:Simulation,action:Action):Simulation {
   }
   if(action.type==='replace')return action.state;
   if(action.type==='preview')return{...state,preview:action.preview};
-  if(action.type==='reset') return state.databaseBacked?{...state,technicians:Object.fromEntries(Object.entries(state.technicians).map(([id,t])=>[id,{...t,running:false,replay:undefined}]))}:initialState();
+  if(action.type==='reset') return state.databaseBacked?{...state,speed:1,preview:undefined,technicians:Object.fromEntries(Object.entries(state.technicians).map(([id,t])=>[id,{...t,running:false,replay:undefined}]))}:initialState();
   if(action.type==='speed') return [1,5,10].includes(action.speed)?{...state,speed:action.speed}:state;
   if(action.type==='tick') {
     const next={...state,technicians:{...state.technicians},jobs:{...state.jobs}};

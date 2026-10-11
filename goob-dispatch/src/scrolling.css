@@ -36,3 +36,5 @@
     body .desk-layout .sidebar nav { overflow-x: auto; overflow-y: hidden; }
   }
 }
+
+.dispatch-reset-button{border:1px solid #d8cbd8;border-radius:6px;padding:9px 12px;font-size:12px;white-space:nowrap;background:#fffdf9;color:#513956}.desk-header .dispatch-reset-button{margin-left:auto}.desk-header .dispatch-reset-button+.new-job-button{margin-left:0}@media(max-width:760px){.desk-header{flex-wrap:wrap;height:auto;min-height:68px}.desk-header .dispatch-reset-button{font-size:11px;padding:7px 9px}.desk-header .date-navigation{margin-left:auto}}

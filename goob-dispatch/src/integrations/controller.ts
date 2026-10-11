@@ -62,7 +62,7 @@ export function useDispatchController(selection:Selection,realMap:boolean){
     if(action.type==='tick'||action.type==='replace'||action.type==='preview')return false;
     // Replay is a local presentation action, never a second dispatch approval.
     if(action.type==='replay'||(('techId' in action)&&current.current.technicians[action.techId]?.replay&&['start','pause'].includes(action.type))){if(locked.current)return false;local(action);return true;}
-    if(action.type==='speed'){local(action);return true;}if(action.type==='reset'){for(const [id,t] of Object.entries(current.current.technicians)){if(t.running&&!t.replay&&!(await dispatch({type:'pause',techId:id})))return false;}local(action);return true;}
+    if(action.type==='speed'){local(action);return true;}if(action.type==='reset'){if(locked.current||!ready)return false;for(const [id,t] of Object.entries(current.current.technicians)){if(t.running&&!t.replay&&!(await dispatch({type:'pause',techId:id})))return false;}local(action);return true;}
     if(locked.current)return false;if(!ready){setError('The authenticated dispatch server is unavailable. Assignments require server confirmation.');return false;}
     locked.current=true;setPending(true);setError('');
     try{
