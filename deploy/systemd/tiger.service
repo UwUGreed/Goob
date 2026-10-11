@@ -10,7 +10,7 @@ WorkingDirectory=/var/www/tiger/current
 EnvironmentFile=/etc/tiger/tiger.env
 Environment=PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 Environment=HOME=/var/www/tiger
-ExecStart=/var/www/tiger/current/.venv/bin/python -m operations.server
+ExecStart=/var/www/tiger/current/.venv/bin/python -m uvicorn operations.portal_server:application --factory --host 127.0.0.1 --port 8081
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=30

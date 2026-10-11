@@ -2,7 +2,7 @@ from sqlalchemy import case, func, select
 
 from operations.domain import agreements
 from operations.domain.common import record
-from operations.persistence.models import Movement, Reservation, now
+from operations.persistence.models import DispatchTechnician, DispatchVisit, Movement, Reservation, now
 
 
 def evaluate(db, actor, job_id):
@@ -77,11 +77,28 @@ def evaluate(db, actor, job_id):
             "state": "ready" if job.data["customer_approved"] else "blocked",
         }
     )
+    visit = db.scalar(
+        select(DispatchVisit).where(
+            DispatchVisit.tenant_id == actor.tenant,
+            DispatchVisit.job_id == job.id,
+        )
+    )
+    technician = (
+        db.get(DispatchTechnician, (actor.tenant, visit.technician_id))
+        if visit and visit.technician_id else None
+    )
+    assigned = bool(
+        technician and technician.branch_id == job.branch_id
+        and technician.trade == job.data["trade"]
+        and visit.date and visit.start is not None and visit.end is not None
+        and visit.status in {"Assigned", "En route", "Arrived", "Working", "Completed"}
+    )
     checks.append(
         {
             "id": "technician_qualification_and_availability",
-            "state": "unknown",
-            "reason": "Dispatch-owned evidence is not connected; no scheduling decision is made.",
+            "state": "ready" if assigned else "unknown",
+            "reason": "Matching technician and schedule recorded in Dispatch."
+            if assigned else "Assign a qualified technician and time in Dispatch.",
         }
     )
     verdict = (

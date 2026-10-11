@@ -55,6 +55,7 @@ from operations.persistence.models import (
     Outbox,
     Proposal,
     Record,
+    ServicePlan,
     Terms,
     now,
     uid,
@@ -85,6 +86,26 @@ class MessageDraft(Strict):
     customer_id: str
     channel: str = Field(pattern="^(email|sms)$")
     text: str = Field(min_length=1, max_length=5000)
+
+
+class LeadIntake(Strict):
+    branch_id: str
+    name: str = Field(min_length=1, max_length=250)
+    address: str = Field(min_length=1, max_length=500)
+    email: str = Field(default="", max_length=254)
+    phone: str = Field(default="", max_length=80)
+    trade: str = Field(pattern="^(HVAC|Plumbing|Electrical)$")
+    service: str = Field(min_length=1, max_length=80)
+    description: str = Field(min_length=1, max_length=1000)
+
+
+class ExistingOpportunity(Strict):
+    branch_id: str
+    customer_id: str
+    property_id: str
+    trade: str = Field(pattern="^(HVAC|Plumbing|Electrical)$")
+    service: str = Field(min_length=1, max_length=80)
+    description: str = Field(min_length=1, max_length=1000)
 
 
 def create_app(engine=None, verifier=None, gemini=None):
@@ -331,6 +352,19 @@ def create_app(engine=None, verifier=None, gemini=None):
         return mutate(
             db, user, idempotency_key, "agreement:create", p, lambda: agreements.create(db, user, p)
         )
+
+    @app.get(prefix + "/agreements")
+    def list_agreements(db=Depends(session), user=Depends(actor)):
+        check(db, user, "agreements")
+        return [
+            dump(row) | {"remaining": agreements.balance(db, user.tenant, row.id)}
+            for row in db.scalars(
+                select(Agreement).where(
+                    Agreement.tenant_id == user.tenant,
+                    Agreement.branch_id.in_(user.branches),
+                ).order_by(Agreement.id)
+            )
+        ]
 
     @app.get(prefix + "/agreements/{identifier}")
     def read_agreement(identifier: str, db=Depends(session), user=Depends(actor)):
@@ -638,6 +672,18 @@ def create_app(engine=None, verifier=None, gemini=None):
             lambda: imports.stage(db, user, body.branch_id, p["rows"]),
         )
 
+    @app.get(prefix + "/imports")
+    def list_imports(db=Depends(session), user=Depends(actor)):
+        check(db, user, "imports")
+        return [
+            dump(row) for row in db.scalars(
+                select(ImportBatch).where(
+                    ImportBatch.tenant_id == user.tenant,
+                    ImportBatch.branch_id.in_(user.branches),
+                ).order_by(ImportBatch.id.desc()).limit(100)
+            )
+        ]
+
     @app.get(prefix + "/imports/{identifier}")
     def read_import(identifier: str, db=Depends(session), user=Depends(actor)):
         check(db, user, "imports")
@@ -698,6 +744,59 @@ def create_app(engine=None, verifier=None, gemini=None):
             p,
             lambda: opportunities.convert(db, user, identifier, p),
         )
+
+    @app.post(prefix + "/opportunities", status_code=201)
+    def create_opportunity(body: ExistingOpportunity, idempotency_key: str = Header(default=""), db=Depends(session), user=Depends(actor)):
+        check(db, user, "opportunities")
+        p = body.model_dump()
+
+        def run():
+            customer = record(db, user, p["customer_id"], "customers", "write")
+            property_record = record(db, user, p["property_id"], "properties", "write")
+            if customer.branch_id != p["branch_id"] or property_record.branch_id != p["branch_id"] or property_record.parent_id != customer.id:
+                raise Problem("Select a property belonging to this customer and branch.", 422)
+            opportunity = Record(
+                tenant_id=user.tenant, id=uid(), branch_id=p["branch_id"],
+                kind="opportunities", name=p["description"][:250],
+                customer_id=customer.id, property_id=property_record.id,
+                data={"trade": p["trade"], "service": p["service"],
+                      "description": p["description"], "state": "reviewed", "source_job_id": None},
+            )
+            db.add(opportunity)
+            db.flush()
+            event(db, user, p["branch_id"], "opportunity.created", opportunity.id, {"customer_id": customer.id})
+            return dump(opportunity)
+
+        return mutate(db, user, idempotency_key, "opportunity:create", p, run)
+
+    @app.post(prefix + "/leads", status_code=201)
+    def capture_lead(body: LeadIntake, idempotency_key: str = Header(default=""), db=Depends(session), user=Depends(actor)):
+        check(db, user, "opportunities")
+        p = body.model_dump()
+
+        def run():
+            user.allow(p["branch_id"], "write")
+            customer = crm.create(db, user, "customers", {
+                "branch_id": p["branch_id"], "name": p["name"],
+                "data": {"email": p["email"], "phone": p["phone"]},
+            })
+            property_record = crm.create(db, user, "properties", {
+                "branch_id": p["branch_id"], "name": p["address"],
+                "parent_id": customer["id"], "data": {"address": p["address"]},
+            })
+            lead = Record(
+                tenant_id=user.tenant, id=uid(), branch_id=p["branch_id"],
+                kind="opportunities", name=p["description"][:250],
+                customer_id=customer["id"], property_id=property_record["id"],
+                data={"trade": p["trade"], "service": p["service"],
+                      "description": p["description"], "state": "reviewed", "source_job_id": None},
+            )
+            db.add(lead)
+            db.flush()
+            event(db, user, p["branch_id"], "lead.captured", lead.id, {"customer_id": customer["id"]})
+            return {"lead": dump(lead), "customer": customer, "property": property_record}
+
+        return mutate(db, user, idempotency_key, "lead:capture", p, run)
 
     @app.post(prefix + "/opportunities/{identifier}/dismiss")
     def dismiss_opportunity(
@@ -776,6 +875,7 @@ def create_app(engine=None, verifier=None, gemini=None):
         result = {"schema_version": 1, "exported_at": now().isoformat()}
         for model in [
             Record,
+            ServicePlan,
             Agreement,
             Terms,
             Benefit,
