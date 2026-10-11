@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import App from './App';
-type Account={identifier:string;workspace:string;role:string;demo:boolean};
+import type { Account } from './workspace/config';
 export function safeReturn(value:string|null){
   if(!value||value.includes('\\'))return '/overview';
   try{const u=new URL(value,window.location.origin);return u.origin===window.location.origin&&/^\/(overview|dispatch|customers|jobs|inventory|growth|memberships|stock-ledger|work-review|migration)(\/[^/]+)?$/.test(u.pathname)?u.pathname+u.search:'/overview';}catch{return '/overview';}

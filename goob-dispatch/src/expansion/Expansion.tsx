@@ -10,7 +10,7 @@ import './expansion.css';
 
 export function Expansion({page,go,state,dispatch}:{page:string;go:(path:string)=>void;state:Simulation;dispatch:(action:Action)=>Promise<boolean>}){
   const me=useResource<{branches:string[];role:string}>('/me');
-  if(me.loading)return <section className="expansion-page" role="status">Loading workspace access…</section>;
+  if(me.loading&&!me.data)return <section className="expansion-page" role="status">Loading workspace access…</section>;
   if(me.error||!me.data?.branches.length)return <section className="expansion-page" role="alert">{me.error||'No branch is available for this account.'}</section>;
   const branchId=me.data.branches[0];
   if(page==='growth')return <Growth branchId={branchId} go={go} state={state}/>;

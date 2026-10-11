@@ -13,7 +13,8 @@ test('portal exposes growth, coverage, stock, review and migration workflows',as
   await page.route('**/api/**',async route=>{
     const request=route.request(),path=new URL(request.url()).pathname;calls.push(`${request.method()} ${path}`);
     let payload:unknown=[];
-    if(path==='/api/auth/session')payload={identifier:'demo',workspace:'Columbia demo',role:'owner',demo:true};
+    if(path==='/api/auth/session')payload={identifier:'demo',workspace:'Columbia demo',role:'owner',tenant:'test-tenant',userId:'test-owner',demo:true};
+    else if(path==='/api/v1/workspace-views')payload={views:[],teamDefault:null,activeViewId:null};
     else if(path==='/api/config')payload={authenticated:true,localDemo:false,browserKey:'',mapId:'',routes:false,voice:false};
     else if(path==='/api/dispatch')payload={state:empty};
     else if(path==='/api/v1/me')payload={branches:['a'],role:'owner'};

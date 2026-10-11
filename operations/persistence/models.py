@@ -343,3 +343,30 @@ class ServicePlan(Scoped, Base):
     configuration: Mapped[dict] = mapped_column(JSONB, default=dict)
     revision: Mapped[int] = mapped_column(Integer, default=1)
     __table_args__ = (branch_fk(),)
+
+
+class WorkspaceView(Base):
+    __tablename__ = "workspace_views_v1"
+    tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants_v1.id"), primary_key=True)
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=uid)
+    subject: Mapped[str]
+    page: Mapped[str]
+    scope: Mapped[str] = mapped_column(String, default="personal")
+    name: Mapped[str]
+    configuration: Mapped[dict] = mapped_column(JSONB)
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (CheckConstraint("page IN ('overview','dispatch')"),
+                      CheckConstraint("scope IN ('personal','team')"),)
+
+
+class WorkspaceSelection(Base):
+    __tablename__ = "workspace_selections_v1"
+    tenant_id: Mapped[str] = mapped_column(String, primary_key=True)
+    subject: Mapped[str] = mapped_column(String, primary_key=True)
+    page: Mapped[str] = mapped_column(String, primary_key=True)
+    view_id: Mapped[str | None] = mapped_column(String)
+    __table_args__ = (
+        ForeignKeyConstraint(["tenant_id", "subject"], ["memberships_v1.tenant_id", "memberships_v1.subject"]),
+        ForeignKeyConstraint(["tenant_id", "view_id"], ["workspace_views_v1.tenant_id", "workspace_views_v1.id"]),
+        CheckConstraint("page IN ('overview','dispatch')"),)

@@ -124,7 +124,7 @@ def create_app(engine=None, verifier=None, gemini=None):
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[v.strip() for v in os.environ.get("ALLOWED_ORIGINS", "").split(",") if v.strip()],
-        allow_methods=["GET", "POST", "PATCH"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE"],
         allow_headers=["Authorization", "Content-Type", "X-Tenant-ID", "Idempotency-Key"],
         expose_headers=["X-Request-ID"],
     )
@@ -150,7 +150,7 @@ def create_app(engine=None, verifier=None, gemini=None):
         if length and (not length.isdigit() or int(length) > 1000000):
             return JSONResponse(status_code=413, content={"error": "Request exceeds 1 MB."})
         # Check actual bytes too, including chunked requests, before JSON parsing.
-        if request.method in {"POST", "PATCH"}:
+        if request.method in {"POST", "PATCH", "DELETE"}:
             size, chunks = 0, []
             async for chunk in request.stream():
                 size += len(chunk)
@@ -932,4 +932,6 @@ def create_app(engine=None, verifier=None, gemini=None):
 
     from operations.api_v1.portal import register_portal
     register_portal(app, factory, session, actor)
+    from operations.api_v1.workspace_views import register_workspace_views
+    register_workspace_views(app, session, actor)
     return app
