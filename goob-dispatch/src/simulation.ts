@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { depot, jobs, technicians, stockFixtures, customerFixtures, teamRecords } from './data';
-import { findRoute, routeLength } from './routing';
+import { findRoute, routeLength, nodes } from './routing';
 import { allJobs, proposedSlot, slotAllowed } from './schedule';
 import type { Job, Customer, StockItem, ScheduleSlot, Simulation, TechState } from './types';
 import type { DrivingRoute } from './integrations/geography';
@@ -67,10 +67,16 @@ export function reducer(state:Simulation,action:Action):Simulation {
     const assigned={...state.bookings,[action.jobId]:{...slot,techId:action.techId}};
     updated={...travel(t,allJobs(state).find(j=>j.id===action.jobId)!.node,action.driving),status:'Assigned',jobId:action.jobId};jobStates[action.jobId]='Assigned';return {...state,bookings:assigned,technicians:{...state.technicians,[action.techId]:updated},jobs:jobStates};
   } else if(action.type==='replay') {
-    if(t.status!=='Arrived'||!t.route.length||t.running||t.replay?.running)return state;
+    if(!['Arrived','Working','Completed'].includes(t.status)||t.running||t.replay?.running)return state;
+    if(!t.route.length){
+      const destination=allJobs(state).find(j=>j.id===t.jobId)?.node;
+      if(!destination||!nodes[destination])return state;
+      updated={...t,route:findRoute(depot,destination),driving:undefined};
+    }
+    updated.duration=Math.max(10,t.duration||routeLength(updated.route)/20);
     updated.replay={progress:0,running:true};
   } else if(action.type==='start') {
-    if(t.replay&&t.status==='Arrived'&&t.replay.progress<1){updated.replay={...t.replay,running:true};return {...state,technicians:{...state.technicians,[action.techId]:updated}};}
+    if(t.replay&&['Arrived','Working','Completed'].includes(t.status)&&t.replay.progress<1){updated.replay={...t.replay,running:true};return {...state,technicians:{...state.technicians,[action.techId]:updated}};}
     if(!['Assigned','En route','Returning'].includes(t.status)||t.running) return state;
     updated={...t,running:true,status:t.status==='Returning'?'Returning':'En route'};
     if(t.jobId && t.status!=='Returning') jobStates[t.jobId]='En route';
