@@ -61,6 +61,7 @@ export function useDispatchController(selection:Selection,realMap:boolean){
   async function dispatch(action:Action):Promise<boolean>{
     current.current=motion.getState();
     if(action.type==='tick'||action.type==='replace'||action.type==='preview')return false;
+    if(!current.current.databaseBacked&&action.type==='reset'){local({type:'replace',state:freshDemoState(savedRecords.current??undefined)});return true;}
     if(!current.current.databaseBacked){const next=reducer(current.current,action);local(action);return next!==current.current;}
     // Replay is a local presentation action, never a second dispatch approval.
     if(action.type==='replay'||(('techId' in action)&&current.current.technicians[action.techId]?.replay&&['start','pause'].includes(action.type))){if(locked.current)return false;local(action);return true;}
@@ -83,7 +84,7 @@ export function useDispatchController(selection:Selection,realMap:boolean){
     finally{locked.current=false;if(alive.current)setPending(false);}
   }
   const hasGoogleJourney=Object.values(state.technicians).some(t=>t.driving&&['Assigned','En route','Arrived','Working','Returning'].includes(t.status));
-  function startDemo(){if(locked.current||!ready)return false;if(state.databaseBacked)savedRecords.current=motion.getState();local({type:'replace',state:freshDemoState()});setError('');setSelectionError('');setSelectionLoading(false);return true;}
+  function startDemo(){if(locked.current||!ready)return false;if(state.databaseBacked)savedRecords.current=motion.getState();local({type:'replace',state:freshDemoState(savedRecords.current??undefined)});setError('');setSelectionError('');setSelectionLoading(false);return true;}
   function exitDemo(){if(savedRecords.current){local({type:'replace',state:savedRecords.current});savedRecords.current=null;}}
   return{startDemo,exitDemo,state,dispatch,motion,config,configLoading:!configLoaded,ready,pending,error,clearError:()=>setError(''),hasGoogleJourney,selectionError,selectionLoading};
 }

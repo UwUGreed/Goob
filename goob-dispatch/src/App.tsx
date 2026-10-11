@@ -98,9 +98,10 @@ function GoobApp({account,onSignOut,signOutPending}:{account:Account;onSignOut:(
     if(resetting||pending||!ready)return;
     setResetting(true);
     try{
-      if(await dispatch({type:'reset'})){
+      if(account.demo?startDemo():await dispatch({type:'reset'})){
+        if(account.demo){setRealMap(false);setPreferences(p=>({...p,trade:'All',available:false,jobStatus:'All'}));}
         setFollow(null);setProposal(null);select(null);setDeskSearch('');setFullDay(false);setDay(demoDate);setMapError('');clearError();
-        setNotice(state.databaseBacked?'Dispatch reset: travel paused; saved jobs and assignments retained. Use Start fresh demo for a new simulation.':'Demo reset: fresh unassigned jobs and stocked trucks restored. Saved records are unchanged.');
+        setNotice(account.demo||state.demoSandbox?'All demo jobs reset to Unassigned, schedules cleared, technicians available and demo trucks restocked. Saved business history remains separate.':'Dispatch paused; saved jobs retained.');
       }
     }finally{setResetting(false);}
   }

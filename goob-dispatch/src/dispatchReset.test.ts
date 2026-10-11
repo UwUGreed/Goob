@@ -43,3 +43,12 @@ describe('fresh demo sandbox',()=>{
   expect(reducer({...fresh,jobs:{...fresh.jobs,oak:'Completed'}},{type:'reset'})).toEqual(fresh);
  });
 });
+
+ it('resets every workspace job including visits sharing a location',()=>{
+  const base=initialState();const records=[{...jobs[0],id:'first'},{...jobs[0],id:'second',title:'Second visit'}];
+  const source={...base,databaseBacked:true,records,jobs:{first:'Completed' as const,second:'Completed' as const},bookings:{first:{techId:'maya',date:'2026-10-10',start:1,end:2,travelStart:0}}};
+  const reset=freshDemoState(source);
+  expect(reset.jobs).toEqual({first:'Unassigned',second:'Unassigned'});expect(reset.bookings).toEqual({});
+  expect(reset.records?.map(j=>j.id)).toEqual(['first','second']);expect(reset.records?.[0].node).toBe(reset.records?.[1].node);
+  expect(source.jobs.first).toBe('Completed');expect(source.bookings.first).toBeDefined();
+ });

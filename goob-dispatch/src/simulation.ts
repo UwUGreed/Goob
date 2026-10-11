@@ -8,8 +8,12 @@ export type Action = {type:"membership";operation:string;values:Record<string,un
 export function initialState():Simulation {
   return {customers:customerFixtures,stock:stockFixtures,speed:1,technicians:Object.fromEntries(technicians.map(t=>[t.id,{status:t.id==='jordan'?'Working':'Available',node:t.start,jobId:t.id==='jordan'?'cedar':undefined,route:[],progress:0,running:false,duration:0}])),jobs:Object.fromEntries(jobs.map(j=>[j.id,j.id==='cedar'?'Working':'Unassigned']))};
 }
-export function freshDemoState():Simulation {
- const base=initialState();return {...base,databaseBacked:false,demoSandbox:true,jobs:Object.fromEntries(jobs.map(j=>[j.id,'Unassigned'])),technicians:Object.fromEntries(technicians.map(t=>[t.id,{status:'Available',node:t.start,route:[],progress:0,running:false,duration:0}]))};
+export function freshDemoState(source?:Simulation):Simulation {
+ const base=source??initialState(),catalog=allJobs(base),roster=teamRecords(base);
+ return {...structuredClone(base),databaseBacked:false,demoSandbox:true,bookings:{},reservations:[],preview:undefined,speed:1,
+ jobs:Object.fromEntries(catalog.map(j=>[j.id,'Unassigned'])),
+ stock:stockRecords(base).map(i=>({...i,reservedQuantity:0,quantity:Math.max(i.quantity,i.threshold, catalog.filter(j=>j.trade===i.trade).reduce((sum,j)=>sum+(j.requirements?.filter(n=>n.skuId===i.skuId).reduce((n,r)=>n+r.quantity,0)??(j.part===i.part?1:0)),0))})),
+ technicians:Object.fromEntries(roster.map(t=>[t.id,{status:'Available',node:nodes[t.start]?t.start:depot,route:[],progress:0,running:false,duration:0}]))};
 }
 export const stockRecords=(state:Simulation):StockItem[]=>state.stock??stockFixtures;
 export function reservedCount(state:Simulation,truck:string,part:string,exclude?:string){if(state.reservations)return state.reservations.filter(r=>r.truck===truck&&r.part===part&&r.jobId!==exclude).reduce((n,r)=>n+r.quantity,0);return Object.entries(state.technicians).filter(([id,t])=>teamRecords(state).find(x=>x.id===id)?.truck===truck&&t.jobId!==exclude&&['Assigned','En route','Arrived','Working'].includes(t.status)&&allJobs(state).find(j=>j.id===t.jobId)?.part===part).length;}
@@ -43,7 +47,7 @@ export function reducer(state:Simulation,action:Action):Simulation {
   }
   if(action.type==='replace')return action.state;
   if(action.type==='preview')return{...state,preview:action.preview};
-  if(action.type==='reset') return state.demoSandbox?freshDemoState():state.databaseBacked?{...state,speed:1,preview:undefined,technicians:Object.fromEntries(Object.entries(state.technicians).map(([id,t])=>[id,{...t,running:false,replay:undefined}]))}:initialState();
+  if(action.type==='reset') return state.demoSandbox?freshDemoState(state):state.databaseBacked?{...state,speed:1,preview:undefined,technicians:Object.fromEntries(Object.entries(state.technicians).map(([id,t])=>[id,{...t,running:false,replay:undefined}]))}:initialState();
   if(action.type==='speed') return [1,5,10].includes(action.speed)?{...state,speed:action.speed}:state;
   if(action.type==='tick') {
     const next={...state,technicians:{...state.technicians},jobs:{...state.jobs}};
@@ -89,7 +93,7 @@ export function reducer(state:Simulation,action:Action):Simulation {
     updated.status='Working';updated.replay=undefined;jobStates[t.jobId]='Working';
   } else if(action.type==='complete') {
     if(t.status!=='Working'||!t.jobId) return state;
-    updated.status='Completed';jobStates[t.jobId]='Completed';const part=allJobs(state).find(j=>j.id===t.jobId)?.part,truck=technicians.find(x=>x.id===action.techId)?.truck;state={...state,stock:stockRecords(state).map(i=>i.part===part&&i.truck===truck?{...i,quantity:Math.max(0,i.quantity-1)}:i)};
+    updated.status='Completed';jobStates[t.jobId]='Completed';const part=allJobs(state).find(j=>j.id===t.jobId)?.part,truck=teamRecords(state).find(x=>x.id===action.techId)?.truck;state={...state,stock:stockRecords(state).map(i=>i.part===part&&i.truck===truck?{...i,quantity:Math.max(0,i.quantity-1)}:i)};
   } else if(action.type==='return') {
     if(t.status!=='Completed') return state;
     updated={...travel(t,depot,action.driving),status:'Returning',running:true};

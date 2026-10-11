@@ -1,13 +1,13 @@
 import { test, expect, type BrowserContext } from '@playwright/test';
 import { initialState, reducer, type Action } from '../src/simulation';
 import { preset, type Page, type View, type ViewList } from '../src/workspace/config';
-function service(databaseBacked=true){
+function service(databaseBacked=true,demo=true){
  let state:ReturnType<typeof initialState>={...initialState(),databaseBacked},counter=0,failNext=false;
  const snapshots:Record<Page,ViewList>={overview:{views:[],teamDefault:null,activeViewId:null},dispatch:{views:[],teamDefault:null,activeViewId:null}};
  const actions:string[]=[];
  async function connect(context:BrowserContext){await context.route('**/api/**',async route=>{
   const req=route.request(),url=new URL(req.url()),path=url.pathname,method=req.method();let payload:unknown={},status=200;
-  if(path==='/api/auth/session')payload={identifier:'owner',workspace:'Columbia',role:'owner',tenant:'test',userId:'owner-test',demo:true};
+  if(path==='/api/auth/session')payload={identifier:'owner',workspace:'Columbia',role:'owner',tenant:'test',userId:'owner-test',demo};
   else if(path==='/api/config')payload={authenticated:true,browserKey:'',mapId:'',routes:false,voice:false};
   else if(path==='/api/dispatch'){if(method==='POST'){const action=req.postDataJSON() as Action & {type:string;techId:string};actions.push(action.type);if((action.type as string)==='arrive'){const t=state.technicians[action.techId];state={...state,jobs:{...state.jobs,[t.jobId!]:'Arrived'},technicians:{...state.technicians,[action.techId]:{...t,status:'Arrived',running:false,progress:1}}};}else state=reducer(state,action);}payload={state};}
   else if(path.startsWith('/api/v1/workspace-views')){
@@ -49,7 +49,7 @@ test('dispatch selection and travel survive view changes',async({page,context})=
 
 
 test('visible Dispatch reset pauses travel and retains assignments and stock',async({page,context})=>{
- const api=service(true);await api.connect(context);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ const api=service(true,false);await api.connect(context);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/dispatch?job=oak');await expect(page.getByRole('button',{name:'Reset Dispatch',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Assign Maya',exact:true}).click();await page.getByRole('button',{name:'Start travel simulation',exact:true}).click();
  await page.getByRole('button',{name:'10×',exact:true}).click();const stock=structuredClone(api.state.stock);
