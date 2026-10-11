@@ -1,8 +1,8 @@
 # Goob
 
-Goob's React website uses the Python operations API backed by Tiger Cloud PostgreSQL.
-The repository also contains the authenticated `/api/v1` backend and the standalone
-97-table foundation. Their records remain separate; see
+Goob's React website uses the authenticated `/api/v1` operations API and the
+portal dispatch API backed by Tiger Cloud PostgreSQL. The legacy website schema
+and standalone 97-table foundation remain separate; see
 [database ownership and integration](docs/backend/DATABASE-INTEGRATION.md).
 
 The complete Dispatch application and public sign-in portal use the existing
@@ -13,36 +13,35 @@ The server loads the ignored root `.env` Tiger Cloud connection. This portal use
 an additive migration and a separate fictional demo workspace; legacy schemas
 and records are retained. There is no local database fallback.
 
-## Run the website with the cloud database
+## Run the portal with the cloud database
 
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 npm ci --prefix goob-dispatch
 npm run build --prefix goob-dispatch
-.venv/bin/python -m operations.database check
-.venv/bin/python -m operations.server
+.venv/bin/python -m operations.portal_server
 ```
 
 Provide `DATABASE_URL` in the server environment or the private ignored `.env`.
-Use the Tiger Cloud credentials, never a `VITE_` variable. The website is served at
-http://127.0.0.1:8081. Normal startup only checks the existing schema: it does not
-initialize tables, seed customers, import records, or start a database server.
+Use the Tiger Cloud credentials, never a `VITE_` variable. The local portal is served at
+http://127.0.0.1:8090. Normal startup does not initialize tables, seed customers,
+import records, or start a database server. `/health/ready` checks the v1 schema.
 Missing credentials or an unavailable cloud database produce an error. There is
 no SQLite fallback. The old `GOOB_DEMO_DB` override is rejected.
 
-The dispatch map remains a fictional local simulation. **Work review** reads the
-cloud's separate Morgan Ellis workflow and preserves its existing approvals. Map
-assignments and work-review jobs are not synchronized. Its identity selector and
-AI proposal remain explicitly simulated; keep this server on loopback.
+The dispatch map remains a fictional local simulation. Customers, jobs, memberships,
+inventory movements, work review, migration and opportunities use the same scoped
+v1 records. Gemini extraction and spoken ElevenLabs job briefings remain TBD;
+manual technician-note review and typed dispatch requests are available.
 
 For frontend development, run the Python server and then
-`npm run dev --prefix goob-dispatch`. Vite proxies `/api` to port 8081.
-The new authenticated backend has separate [setup instructions](docs/backend/README.md).
+`npm run dev --prefix goob-dispatch`. Vite proxies `/api` to port 8090.
+The backend has separate [setup instructions](docs/backend/README.md).
 
 ## Database ownership
 
-- `goob`: current website work review and its existing history.
+- `goob`: retained legacy website history, not the portal's current data source.
 - `goob_foundation`: teammate's normalized 97-table foundation.
 - `public.*_v1`: new authenticated operations API.
 

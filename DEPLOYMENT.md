@@ -25,12 +25,10 @@ fresh dedicated server. Adding these files alone does not provision a server.
 - Frontend: React 19, TypeScript, Vite 6, Tailwind 4, Three.js; npm with
   `goob-dispatch/package-lock.json`. Install with `npm ci --prefix goob-dispatch`;
   build with `npm run build --prefix goob-dispatch`. Node/npm are build tools only.
-- Website: Python standard-library HTTP server, psycopg2, dotenv. Start with
-  `.venv/bin/python -m operations.server`; loopback 8081 serves both built assets
-  and the existing `/api` contract. Vite development uses 5173.
-- Separate backend: FastAPI/Uvicorn, SQLAlchemy, psycopg 3, Alembic, OIDC; port
-  8090. The website does NOT call its `/api/v1` endpoints. Existing backend-only
-  Docker/Compose/Caddy deployment remains unchanged and is not started here.
+- Portal: FastAPI/Uvicorn, SQLAlchemy, psycopg 3, Alembic, and same-origin
+  session authentication. `operations.portal_server:application` serves built
+  assets, dispatch, and `/api/v1` together on loopback 8081. Vite development
+  uses 5173 and proxies to the local portal on 8090.
 - This is a multi-component repository, without a workspace package manager.
   Python dependencies use `requirements.txt` and the existing backend constraint
   lock. Ubuntu supplies Python 3.12; setup installs Node 22 with npm from official
@@ -43,9 +41,8 @@ fresh dedicated server. Adding these files alone does not provision a server.
   the database server. No local PostgreSQL server or new database is created.
   All three schema migrations target the explicitly configured cloud service.
   TLS verifies its hostname using a trusted CA certificate.
-- The website has simulated roles, not real user authentication. Nginx adds a
-  shared staging password, and denies remote HTTP access until HTTPS is ready.
-  This is a private demo deployment, not a multi-user production security model.
+- The portal has database-backed users and scoped roles. Nginx also adds a
+  temporary shared staging password before the portal sign-in screen.
 
 ## 1. First-time Vultr setup
 
@@ -219,10 +216,8 @@ For a deliberately empty, authorized demo service ONLY, an operator may use:
 sudo -u tiger bash -c 'cd /var/www/tiger/current && .venv/bin/python scripts/vultr-database.py seed --confirm-fictional-demo'
 ```
 
-This existing seed preserves an existing demo tenant and approvals; normal CI
-never invokes it. The foundation's isolated-development seed/reset guards remain
-unchanged; do not bypass them for the shared cloud database. V1 provisioning is
-separate and unnecessary for the current website. No fixture files were removed.
+Normal CI never runs demo provisioning. The foundation's isolated-development
+seed/reset guards remain unchanged; do not bypass them for the shared cloud database.
 
 ## 6. Test and inspect logs
 
@@ -232,8 +227,9 @@ Before a domain/HTTPS, open a tunnel from your local machine using your ADMIN lo
 ssh -L 8088:127.0.0.1:80 root@45.76.253.215
 ```
 
-Open http://127.0.0.1:8088 and enter the staging `demo` login. Select Oak Lane →
-Assign visit → Start. Check Work review against the existing cloud records. Public HTTP
+Open http://127.0.0.1:8088, pass the staging password gate, then sign in to Goob.
+Select a job → assign a technician → complete the visit → review work and material
+disposition. Public HTTP
 returns 403 intentionally; the SSH tunnel encrypts your connection to Vultr.
 
 On Vultr:
@@ -338,14 +334,12 @@ production website, so no upgrade configuration is needed.
 - 403 over public HTTP: intentional until HTTPS setup above.
 - 401: staging password required. Use the htpasswd command without -c to update.
 - HTTPS POST 403: GOOB_PUBLIC_ORIGIN must match the browser's exact origin.
-- Work review missing: confirm this is the intended existing Tiger Cloud service
-  and website schema. Foundation/v1 rows do not populate this UI. Do not reset data.
+- Work review missing: confirm the portal is serving the current frontend build,
+  `/api/v1/me` succeeds, and the tenant has workflow module access. Do not reset data.
 - New service/Nginx template changes require an administrator to review/install
   them; routine CI cannot sudo-install configuration or change the firewall.
-- Separate authenticated v1 is not launched by this website profile. Its existing
-  deploy/backend documentation describes OIDC and container setup. Do not run
-  its Caddy on the same 80/443 ports as Nginx. Connecting the UI to v1 is outside
-  this infrastructure task.
+- The same-origin portal serves `/api/v1` on its application port; do not start
+  another Caddy or API process on Nginx's 80/443 ports.
 
 References: [Nginx proxy headers](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)
 , [PostgreSQL client packages](https://www.postgresql.org/download/linux/ubuntu/)

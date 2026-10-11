@@ -246,6 +246,7 @@ def dispatch(db, actor, action):
             reservations = db.scalars(select(Reservation).where(Reservation.tenant_id == actor.tenant, Reservation.job_id == visit.job_id, Reservation.state == "active").with_for_update()).all()
             for r in reservations:
                 inventory.execute(db, actor, {"action": "issue", "sku_id": r.sku_id, "location_id": r.location_id, "job_id": visit.job_id, "reservation_id": r.id, "quantity": r.quantity, "reason": "Completed dispatch work"})
-                job = record(db, actor, visit.job_id, "jobs")
-                inventory.dispose(db, actor, job, {"sku_id": r.sku_id, "location_id": r.location_id, "quantity": r.quantity, "disposition": "installed"})
+            # Completion issues the reserved part but does not decide whether it was
+            # installed, returned or damaged. The reviewed work proposal records
+            # that disposition against the technician's note.
     event(db, actor, tech.branch_id, "dispatch."+kind, tech.id, {"job_id": tech.job_id})

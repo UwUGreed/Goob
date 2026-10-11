@@ -95,6 +95,7 @@ class Record(Scoped, Base):
     property_id: Mapped[str | None] = mapped_column(String)
     equipment_id: Mapped[str | None] = mapped_column(String)
     data: Mapped[dict] = mapped_column(JSONB, default=dict)
+    portal_meta: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
     revision: Mapped[int] = mapped_column(Integer, default=1)
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -114,8 +115,17 @@ class Agreement(Scoped, Base):
     service: Mapped[str]
     status: Mapped[str] = mapped_column(String, default="active")
     canceled_on: Mapped[datetime | None] = mapped_column(Date)
+    portal_meta: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
     revision: Mapped[int] = mapped_column(Integer, default=1)
     __table_args__ = (branch_fk(), record_fk("equipment_id"))
+
+
+class ServicePlan(Scoped, Base):
+    __tablename__ = "service_plans_v1"
+    name: Mapped[str]
+    configuration: Mapped[dict] = mapped_column(JSONB)
+    revision: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    __table_args__ = (branch_fk(),)
 
 
 class Terms(Scoped, Base):
