@@ -1,0 +1,9 @@
+﻿import { describe, expect, it } from 'vitest';
+import { demoDate, proposedSlot, stamp, slotAllowed } from './schedule';
+import { initialState, reducer } from './simulation';
+import { jobs } from './data';
+describe('timestamp-based dispatch schedule',()=>{
+ it('places Oak at 10:45 and leaves ten minutes for travel',()=>{const slot=proposedSlot(initialState(),'maya','oak')!;expect(slot.start).toBe(stamp(demoDate,10,45));expect(slot.end).toBe(stamp(demoDate,11,45));expect(slot.travelStart).toBe(stamp(demoDate,10,35));});
+ it('rejects travel or work overlapping a booked period',()=>{const state=initialState(),slot={date:demoDate,travelStart:stamp(demoDate,12,30),start:stamp(demoDate,12,45),end:stamp(demoDate,13,45)};expect(slotAllowed(state,'chris',slot)).toBe(false);expect(reducer(state,{type:'assign',techId:'chris',jobId:'maple',slot})).toBe(state);});
+ it('creates dispatchable requests only at known service locations, and reserves non-overlapping calendar time',()=>{const job={...jobs[0],id:'job-00000000-0000-4000-8000-000000000001',title:'New sink repair'};let state=reducer(initialState(),{type:'create',job});expect(state.jobs[job.id]).toBe('Unassigned');expect(reducer(state,{type:'create',job})).toBe(state);expect(reducer(state,{type:'create',job:{...job,id:'job-00000000-0000-4000-8000-000000000002',address:'Unknown address'}})).toBe(state);state=reducer(state,{type:'assign',techId:'maya',jobId:job.id});expect(state.jobs[job.id]).toBe('Assigned');expect(state.bookings![job.id].end).toBe(stamp(demoDate,11,45));state=reducer(reducer(reducer(reducer(state,{type:'start',techId:'maya'}),{type:'tick',dt:1000}),{type:'work',techId:'maya'}),{type:'complete',techId:'maya'});const next=proposedSlot(state,'maya','oak')!;expect(next.travelStart).toBeGreaterThanOrEqual(state.bookings![job.id].end);});
+});

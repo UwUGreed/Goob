@@ -35,6 +35,15 @@ describe('journey lifecycle',()=>{
     expect(reducer(s,{type:'assign',techId:'maya',jobId:'willow'})).toBe(s);
     s=reducer(s,{type:'tick',dt:1000});expect(s.technicians.maya.status).toBe('Available');expect(s.technicians.maya.node).toBe(depot);expect(s.jobs.oak).toBe('Completed');
   });
+  it('replays travel without changing arrival, approval, or completed work',()=>{
+    const arrival=arrived();let s=reducer(arrival,{type:'replay',techId:'maya'});
+    expect(s.technicians.maya.progress).toBe(1);expect(s.jobs).toEqual(arrival.jobs);
+    s=reducer(s,{type:'tick',dt:1});expect(s.technicians.maya.replay!.progress).toBeGreaterThan(0);
+    const p=s.technicians.maya.replay!.progress;s=reducer(s,{type:'pause',techId:'maya'});s=reducer(s,{type:'tick',dt:1});expect(s.technicians.maya.replay!.progress).toBe(p);
+    s=reducer(s,{type:'start',techId:'maya'});s=reducer(s,{type:'tick',dt:1000});expect(s.technicians.maya.replay).toEqual({progress:1,running:false});expect(s.jobs.oak).toBe('Arrived');expect(s.technicians.maya.node).toBe(arrival.technicians.maya.node);
+    s=reducer(s,{type:'replay',techId:'maya'});s=reducer(s,{type:'work',techId:'maya'});expect(s.technicians.maya.replay).toBeUndefined();expect(s.jobs.oak).toBe('Working');
+    expect(reducer(initialState(),{type:'replay',techId:'maya'})).toEqual(initialState());
+  });
   it('allows a subsequent plumbing visit from the completed visit location',()=>{
     const s=reducer(completed(),{type:'assign',techId:'maya',jobId:'willow'});expect(s.jobs.willow).toBe('Assigned');expect(s.technicians.maya.route[0]).toEqual(nodes[jobs[0].node]);
     expect(eligible(initialState(),'maya','willow')).toBe(false);

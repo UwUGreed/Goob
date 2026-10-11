@@ -5,3 +5,7 @@ dist/
 .openai/*.tar.gz
 test-results/
 playwright-report/
+.env*
+!.env.example
+.dev.vars*
+.wrangler/
