@@ -8,17 +8,17 @@ import { geoPosition, realStops, type DrivingRoute } from './geography';
 import type { Job, JobStatus, Selection, Simulation } from '../types';
 export function useDispatchController(selection:Selection,realMap:boolean){
   const {state,dispatch:local,motion}=useSimulation({databaseBacked:true,records:[],roster:[],stock:[],customers:[],jobs:{},technicians:{},speed:1}),current=useRef(state);current.current=motion.getState();
-  const savedRecords=useRef<Simulation|null>(null);
+  const savedRecords=useRef<Simulation|null>(null),mutationVersion=useRef(0);
   const [config,setConfig]=useState<IntegrationConfig>(disconnectedConfig),[configLoaded,setConfigLoaded]=useState(false),[ready,setReady]=useState(false),[pending,setPending]=useState(false),[error,setError]=useState('');
   const locked=useRef(false),arrivals=useRef(new Set<string>()),arrivalRequests=useRef(new Map<string,Promise<boolean>>()),alive=useRef(true);
   useEffect(()=>{alive.current=true;api<IntegrationConfig>('/api/config').then(async c=>{if(!alive.current)return;setConfig(c);setConfigLoaded(true);if(!c.authenticated)throw new Error('Sign in to open database records.');const saved=await api<{state:Simulation}>('/api/dispatch');const hydrated={...saved.state,technicians:{...saved.state.technicians}};for(const [id,t] of Object.entries(hydrated.technicians)){const visit=allJobs(hydrated).find(j=>j.id===t.jobId);const destination=t.status==='Returning'?depot:visit?.node;if(destination&&realStops[t.node]&&realStops[destination]&&['Assigned','En route','Returning'].includes(t.status)){const route=findRoute(t.node,destination);hydrated.technicians[id]={...t,route,duration:Math.max(10,routeLength(route)/20),running:false};}}local({type:'replace',state:hydrated});if(alive.current)setReady(true);}).catch(e=>{if(alive.current){setConfigLoaded(true);setError(e.message);}});return()=>{alive.current=false;};},[]);
   useEffect(()=>{
     let request=0;
     const refresh=()=>{
-      if(!ready||!motion.getState().databaseBacked)return;
-      const number=++request;
+      if(!ready||locked.current||!motion.getState().databaseBacked)return;
+      const number=++request,version=mutationVersion.current;
       api<{state:Simulation}>('/api/dispatch').then(saved=>{
-        if(!alive.current||number!==request||!motion.getState().databaseBacked)return;
+        if(!alive.current||locked.current||version!==mutationVersion.current||number!==request||!motion.getState().databaseBacked)return;
         const current=motion.getState();
         local({type:'replace',state:{...saved.state,technicians:Object.fromEntries(Object.entries(saved.state.technicians).map(([id,t])=>[id,current.technicians[id]?.status===t.status&&current.technicians[id]?.jobId===t.jobId?current.technicians[id]:t])),speed:current.speed}});
       }).catch(e=>{if(alive.current&&number===request)setError(e.message);});
@@ -67,7 +67,7 @@ export function useDispatchController(selection:Selection,realMap:boolean){
     if(action.type==='replay'||(('techId' in action)&&current.current.technicians[action.techId]?.replay&&['start','pause'].includes(action.type))){if(locked.current)return false;local(action);return true;}
     if(action.type==='speed'){local(action);return true;}if(action.type==='reset'){if(locked.current||!ready)return false;for(const [id,t] of Object.entries(current.current.technicians)){if(t.running&&!t.replay&&!(await dispatch({type:'pause',techId:id})))return false;}local(action);return true;}
     if(locked.current)return false;if(!ready){setError('The authenticated dispatch server is unavailable. Assignments require server confirmation.');return false;}
-    locked.current=true;setPending(true);setError('');
+    locked.current=true;mutationVersion.current++;setPending(true);setError('');
     try{
       if('techId' in action&&arrivalRequests.current.has(action.techId)){const synced=await arrivalRequests.current.get(action.techId);if(!synced)await api('/api/dispatch',{type:'arrive',techId:action.techId});arrivalRequests.current.delete(action.techId);}
       let driving:DrivingRoute|undefined;

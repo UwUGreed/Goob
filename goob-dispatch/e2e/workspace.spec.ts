@@ -79,3 +79,13 @@ test('fresh demo runs full lifecycle, resets and never writes saved records',asy
  await page.getByRole('button',{name:'Exit demo',exact:true}).click();
  await expect(page.getByRole('button',{name:'Start fresh demo',exact:true})).toBeVisible();expect(errors).toEqual([]);
 });
+
+
+test('double assign cannot also start the replacement travel button',async({page,context})=>{
+ const api=service();await api.connect(context);await page.goto('/dispatch?job=oak');
+ await page.getByRole('button',{name:'Assign Maya',exact:true}).dblclick();
+ await expect(page.getByRole('button',{name:'Start travel simulation',exact:true})).toBeEnabled();
+ expect(api.actions.filter(a=>a==='assign')).toHaveLength(1);expect(api.actions).not.toContain('start');
+ await expect(page.getByRole('complementary',{name:'Selection details'})).toContainText('Assigned');
+ await page.getByRole('button',{name:'Start travel simulation',exact:true}).click();await expect(page.getByRole('button',{name:'Pause',exact:true})).toBeVisible();
+});
