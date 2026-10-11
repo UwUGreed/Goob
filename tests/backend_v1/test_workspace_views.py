@@ -113,3 +113,35 @@ def test_cookie_session_owns_tenant_and_stable_identity(api, engine):
     assert api.request('GET','/workspace-views?page=dispatch',role='other',company=api.other)['views'] == []
     assert api.client.post('/api/v1/workspace-views',json=body,headers={'Idempotency-Key':str(uuid4()),'Origin':'https://untrusted.test'}).status_code == 403
     assert api.client.request('DELETE','/api/v1/workspace-views/'+view_id,json={'revision':1},headers={'Idempotency-Key':str(uuid4())}).status_code == 200
+
+
+@pytest.mark.parametrize('previous', ['20261013_workspace_views', '20261014_view_preferences'])
+def test_merge_upgrades_both_histories_without_replacing_preferences(engine, previous):
+    from alembic import command as migrations
+    from alembic.config import Config
+    from sqlalchemy import insert, text
+    from operations.persistence.models import Tenant
+    from operations.persistence.readiness import SCHEMA_REVISION, check_schema
+    schema='goob_test_merge_'+uuid4().hex
+    tenant=str(uuid4())
+    with engine.begin() as connection:
+        connection.execute(text(f'CREATE SCHEMA "{schema}"'))
+    try:
+        with engine.begin() as connection:
+            connection.execute(text(f'SET LOCAL search_path TO "{schema}", pg_catalog'))
+            cfg=Config('alembic-backend.ini')
+            cfg.attributes['connection']=connection
+            migrations.upgrade(cfg,previous)
+            connection.execute(insert(Tenant).values(id=tenant,name='Merge fixture'))
+            if previous == '20261014_view_preferences':
+                connection.execute(text("INSERT INTO view_preferences_v1(tenant_id,subject,page,revision,settings) VALUES (:tenant,'owner','dispatch',4,CAST(:settings AS jsonb))"),{'tenant':tenant,'settings':'{\"names\":false}'})
+            migrations.upgrade(cfg,'head')
+            assert check_schema(connection)['revision'] == SCHEMA_REVISION
+            assert connection.scalar(text('SELECT count(*) FROM workspace_views_v1')) == 0
+            assert connection.scalar(text('SELECT count(*) FROM tenants_v1')) == 1
+            if previous == '20261014_view_preferences':
+                row=connection.execute(text('SELECT revision,settings FROM view_preferences_v1')).one()
+                assert tuple(row) == (4, {'names':False})
+    finally:
+        with engine.begin() as connection:
+            connection.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))

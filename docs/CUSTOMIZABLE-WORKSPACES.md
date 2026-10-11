@@ -23,6 +23,8 @@ Writes require the existing `Idempotency-Key` contract. Revisions return 409 whe
 
 Migration `20261013_workspace_views` adds `workspace_views_v1` and `workspace_selections_v1`. Existing push-to-main deployment backs up Tiger Cloud and runs Alembic before switching releases. For installations with a separate runtime database role, apply `deploy/backend/grants.sql` as the migration owner to grant access to these tables. Existing data and personal views are retained; downgrade deliberately requires a reviewed forward migration.
 
+The rollout found an existing cloud revision `20261014_view_preferences` missing from source control. Its compatibility migration records the inspected historical table definition; merge revision `20261015_merge_workspace_views` joins both histories. Upgrading that cloud database creates the new workspace tables and preserves its historical preference table without restamping, resetting or editing existing records.
+
 Frontend: `npm test --prefix goob-dispatch`, `npm run build --prefix goob-dispatch`.
 Browser: from `goob-dispatch`, `npx playwright test --config playwright.workspace.config.ts`. This suite launches an isolated Vite instance with mocked HTTP data; it tests editing, retries, saved selections across browser sessions, owner defaults, mobile layout, and dispatch travel preservation. It never changes shared CRM records.
 Backend: `.venv/bin/python -m pytest tests -q`, with an explicit `TEST_DATABASE_URL` for the cloud API integration suite. The fixture creates a uniquely named disposable PostgreSQL schema, migrates and tests it, then drops only that schema. The workspace tests cover persistence, permissions, cross-user/tenant isolation, validation, idempotency and revision conflicts.

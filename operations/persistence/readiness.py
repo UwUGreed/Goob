@@ -4,7 +4,7 @@ from sqlalchemy import literal, select, text, union_all
 
 from operations.persistence.models import Base
 
-SCHEMA_REVISION = "20261013_workspace_views"
+SCHEMA_REVISION = "20261015_merge_workspace_views"
 
 
 def check_schema(connection):
