@@ -4,7 +4,7 @@ import mimetypes
 from urllib.parse import urlsplit
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from operations.db import connect, seed
+from operations.db import connect
 from operations.config import database_target
 from operations.modules import crm, agreements, inventory, workflow
 from operations.modules.registry import REGISTRY, guard, configure
@@ -97,7 +97,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     db = connect(DATABASE)
-    seed(db)
+    db.execute('SELECT 1 FROM tenants LIMIT 1')
     db.close()
     port = int(os.environ.get('GOOB_DEMO_PORT', '8081'))
     print(f'Goob workspace: http://127.0.0.1:{port}', flush=True)

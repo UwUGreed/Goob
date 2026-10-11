@@ -1,6 +1,4 @@
 import json
-import sqlite3
-from pathlib import Path
 from operations.modules.registry import REGISTRY
 
 SCHEMA = '''
@@ -21,15 +19,19 @@ TABLES = ('tenants', 'customers', 'equipment', 'agreements', 'benefits',
 
 
 class PostgresConnection:
-    """Small adapter for the existing operations SQL and SQLite row contract.
+    """PostgreSQL adapter preserving the existing operations row contract.
 
     SQL is internal and uses ? placeholders (never user-supplied SQL).
-    The write lock preserves BEGIN IMMEDIATE's serialization across workers.
+    The write lock serializes approval transactions across workers.
     """
     def __init__(self, url):
         import psycopg2
         from psycopg2.extras import DictCursor
-        self.raw = psycopg2.connect(url, connect_timeout=10, sslmode='require',
+        from psycopg2.extensions import parse_dsn
+        mode = parse_dsn(url).get('sslmode', 'require')
+        if mode not in ('require', 'verify-ca', 'verify-full'):
+            raise ValueError('Cloud PostgreSQL requires TLS.')
+        self.raw = psycopg2.connect(url, connect_timeout=10, sslmode=mode,
                                    application_name='goob-operations',
                                    cursor_factory=DictCursor)
         self.raw.autocommit = True
@@ -41,7 +43,7 @@ class PostgresConnection:
     def execute(self, sql, params=()):
         cursor = self.raw.cursor()
         try:
-            if sql == 'BEGIN IMMEDIATE':
+            if sql == 'BEGIN':
                 cursor.execute('BEGIN')
                 cursor.execute('LOCK TABLE ' + ','.join(TABLES) +
                                ' IN SHARE ROW EXCLUSIVE MODE')
@@ -86,25 +88,20 @@ class PostgresConnection:
             raise
 
 
-def connect(path, initialize=True):
-    if str(path).startswith(('postgres://', 'postgresql://')):
-        db = PostgresConnection(path)
-        try:
-            if initialize:
-                db.initialize()
-            return db
-        except Exception:
-            db.close()
-            raise
-
-    db = sqlite3.connect(path, timeout=10, isolation_level=None)
-    db.row_factory = sqlite3.Row
-    db.execute('PRAGMA journal_mode=WAL')
-    db.executescript(SCHEMA)
-    return db
+def connect(url, initialize=False):
+    if not str(url).startswith(('postgres://', 'postgresql://')):
+        raise ValueError('Only cloud PostgreSQL connections are supported.')
+    db = PostgresConnection(url)
+    try:
+        if initialize:
+            db.initialize()
+        return db
+    except Exception:
+        db.close()
+        raise
 
 def seed(db):
-    db.execute('BEGIN IMMEDIATE')
+    db.execute('BEGIN')
     try:
         if not db.execute('SELECT 1 FROM tenants WHERE id=?', ('demo',)).fetchone():
             db.execute('INSERT INTO tenants VALUES(?,?,?)', ('demo', json.dumps(list(REGISTRY)), json.dumps({'monthly_cents':100000,'validated':False})))

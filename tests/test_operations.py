@@ -1,21 +1,31 @@
 import json
-import tempfile
+import os
+import uuid
 import unittest
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
-from operations.db import connect, seed
+from operations.db import PostgresConnection, SCHEMA, seed
 from operations.modules import agreements, inventory, workflow
 from operations.modules.registry import configure
 
+@unittest.skipUnless(os.environ.get("GOOB_TEST_POSTGRES_URL"), "Set an explicit PostgreSQL integration test URL")
 class OperationsTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.path = str(Path(self.temp.name)/'test.sqlite3')
-        self.db = connect(self.path)
+        self.path = os.environ['GOOB_TEST_POSTGRES_URL']
+        self.schema = 'goob_test_' + uuid.uuid4().hex
+        self.db = PostgresConnection(self.path)
+        self.db.execute(f'CREATE SCHEMA {self.schema}')
+        self.db.execute(f'SET search_path TO {self.schema}, pg_catalog')
+        self.db.execute(SCHEMA)
         seed(self.db)
     def tearDown(self):
+        self.db.rollback()
+        self.db.execute(f'DROP SCHEMA {self.schema} CASCADE')
+        self.assertIsNone(self.db.execute('SELECT to_regnamespace(?)', (self.schema,)).fetchone()[0])
         self.db.close()
-        self.temp.cleanup()
+    def connect_test(self):
+        db = PostgresConnection(self.path)
+        db.execute(f'SET search_path TO {self.schema}, pg_catalog')
+        return db
     def proposal(self):
         return workflow.propose(self.db,'demo','owner')['id']
     def test_approval_and_retry(self):
@@ -51,7 +61,7 @@ class OperationsTests(unittest.TestCase):
         with self.assertRaises(ValueError): workflow.approve(self.db,'demo','owner',p)
     def test_atomic_rollback(self):
         p=self.proposal()
-        self.db.execute("CREATE TRIGGER fail_invoice BEFORE INSERT ON invoices BEGIN SELECT RAISE(ABORT,'test failure'); END")
+        self.db.execute("CREATE FUNCTION fail_invoice() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test failure'; END $$; CREATE TRIGGER fail_invoice BEFORE INSERT ON invoices FOR EACH ROW EXECUTE FUNCTION fail_invoice()")
         with self.assertRaises(Exception): workflow.approve(self.db,'demo','owner',p)
         self.assertEqual(agreements.balance(self.db,'demo','care-v1'),1)
         self.assertEqual(inventory.read(self.db,'demo')[0]['available'],6)
@@ -59,7 +69,7 @@ class OperationsTests(unittest.TestCase):
     def test_concurrent_approvals(self):
         ids=[self.proposal(),self.proposal()]
         def run(p):
-            db=connect(self.path)
+            db=self.connect_test()
             try:
                 workflow.approve(db,'demo','owner',p)
                 return True

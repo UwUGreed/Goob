@@ -25,7 +25,7 @@ def propose(db, tenant, role):
     return {'id':identifier, **payload}
 
 def approve(db, tenant, role, identifier):
-    db.execute('BEGIN IMMEDIATE')
+    db.execute('BEGIN')
     try:
         guard(db,tenant,role,'workflow','approve')
         proposal = db.execute('SELECT * FROM proposals WHERE tenant=? AND id=?',(tenant,identifier)).fetchone()

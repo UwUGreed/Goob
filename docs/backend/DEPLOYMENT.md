@@ -1,8 +1,9 @@
 # Vultr + Tiger Data deployment and recovery
 
-Status: deployment files are prepared. No Vultr instance or hosted Tiger Data service
-was provisioned during implementation. Container build, public HTTPS, OIDC login, and
-live Gemini inference require environment acceptance with the project's accounts.
+Status: the supplied Tiger Cloud service is connected and the v1 schema is deployed;
+see [cloud cutover evidence](CLOUD-CUTOVER.md). Vultr deployment, container build,
+public HTTPS, OIDC login, and live Gemini inference still require environment
+acceptance with the project's accounts.
 
 ## Provision and release
 
@@ -92,7 +93,7 @@ The initial migration is frozen; subsequent changes require new ordered revision
 
 | Dependency | Code/configuration | Live evidence still needed |
 |---|---|---|
-| Tiger Data | PostgreSQL persistence, TLS requirement, migration, reports | Hosted connection and runtime DB grants |
+| Tiger Data | Verified cloud connection, deployed v1 migration, TLS and persistence tests | Dedicated runtime DB grants and trusted production CA |
 | Vultr | Container, Compose/Caddy, health checks, runbook | Image build and deployed HTTPS service |
 | OIDC | RS256 issuer/audience/JWKS verification and memberships | Agreed provider and real user token |
 | Gemini | Text schema, quote checks, quotas, provider failure handling | Key/model and measured sample evaluation |

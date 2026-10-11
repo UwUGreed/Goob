@@ -1,22 +1,19 @@
 # Goob database foundation
 
-This directory contains a standalone PostgreSQL foundation for Goob. It does **not** change application code, data sources, identity handling, routes, startup behavior, or the existing `goob`/SQLite demo. The new tables are in `goob_foundation`; migration/fixture manifests are in `goob_db_meta`. No ORM was added. Python uses the repository's existing pinned psycopg2 and dotenv dependencies.
+This directory contains a standalone PostgreSQL foundation for Goob. It does **not** change application code, data sources, identity handling, routes, startup behavior, or the existing `goob` cloud-backed demo. The new tables are in `goob_foundation`; migration/fixture manifests are in `goob_db_meta`. No ORM was added. Python uses the repository's existing pinned psycopg2 and dotenv dependencies.
 
 All three foundation migrations were explicitly authorized and deployed to the configured Tiger Cloud `tsdb` service on 2026-10-10 (America/New_York). The 97 new tables are empty; existing `goob` data was backed up and verified unchanged. No demo seed, customer import, or application integration occurred. See [deployment evidence](docs/DEPLOYMENT.json).
 
-## Quick verification without touching Tiger Cloud
+## Offline schema check
 
-From the `Goob` repository root:
-
-```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python -m database.generate --check
-.venv/bin/python -m database.test_local
-.venv/bin/python -m database.test_local --postgres-version 18
+```sh
+python3 -m database.generate --check
 ```
 
-These test commands require Docker and start a disposable PostgreSQL 17 or 18 container on a random loopback port, with a random local password and no mounted data volumes. It creates and marks its own isolated development database, applies all migrations, seeds, verifies two `--as-of` dates, tests reset, then removes its own container. It may download the PostgreSQL image. It changes no deployment infrastructure or paid resources. Normal application startup never invokes it.
+The local PostgreSQL/Docker test launcher has been removed. Database mutation
+verification remains available through `database.cli verify` only for a separately
+configured, marked isolated development database. It must not run against the shared
+Tiger Cloud application database. The fixture, reset, and migration guards remain.
 
 ## Connect and inspect
 

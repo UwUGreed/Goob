@@ -55,10 +55,14 @@ tools continue using `GOOB_DATABASE_URL` and their isolated-development/deployme
 guards; v1 does not consume that variable.
 
 Starting the existing website remains `.venv/bin/python -m operations.server`.
-An explicit `GOOB_DEMO_DB` continues to isolate website tests from the cloud.
+The old `GOOB_DEMO_DB` override is removed. Database tests use explicit URLs and
+unique temporary schemas; browser tests require an explicit isolated workspace URL.
 No cloud credentials are included in Git or copied between environments by this merge.
 
-## Verification on a shared isolated PostgreSQL 18 database
+## Historical merge verification on a shared isolated PostgreSQL 18 database
+
+These are the merge-time results. See [cloud cutover](CLOUD-CUTOVER.md) for the
+subsequent removal of local database paths and live cloud verification.
 
 The local test database was newly created and marked as isolated development. It
 contained all three foundation migrations, the 206 known fictional foundation rows,

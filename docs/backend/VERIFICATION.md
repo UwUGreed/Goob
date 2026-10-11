@@ -1,4 +1,7 @@
-# Implementation verification
+# Initial implementation verification
+
+Historical results below. See [cloud cutover](CLOUD-CUTOVER.md) for the current
+cloud-only runtime and removal of the local database paths.
 
 Verified locally on October 10, 2026, using Python 3.14 and PostgreSQL 18.
 

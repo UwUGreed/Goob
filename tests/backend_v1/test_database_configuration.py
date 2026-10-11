@@ -20,10 +20,17 @@ def test_api_role_override_and_explicit_test_target(monkeypatch):
     monkeypatch.setenv("GOOB_API_DATABASE_URL", "postgresql://runtime@localhost/runtime")
     engine = engine_for()
     assert engine.url.database == "runtime"
+    assert engine.url.query["sslmode"] == "require"
     engine.dispose()
     engine = engine_for("postgresql://test@localhost/isolated")
     assert engine.url.database == "isolated"
     engine.dispose()
+
+
+def test_cloud_tls_cannot_be_disabled(monkeypatch):
+    monkeypatch.delenv("GOOB_ENV", raising=False)
+    with pytest.raises(RuntimeError, match="requires TLS"):
+        engine_for("postgresql://user@localhost/test?sslmode=disable")
 
 
 def test_production_ssl_mode_is_parsed_not_substring(monkeypatch):

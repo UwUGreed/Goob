@@ -16,7 +16,9 @@ Post-deployment checks passed: 97 expected business tables, 291 foreign keys, 15
 
 The new schema-deployment path requires an explicitly supplied connection plus exact expected host/database and TLS. Wrong-host and wrong-database checks were tested and rejected. The service was not relabeled as development, and development-only seed/reset/verification guards still reject it. Application integration remains unimplemented; cloud deployment does not establish production authentication or RLS.
 
-## Disposable PostgreSQL
+## Historical disposable PostgreSQL verification
+
+The local launcher used for these historical checks has since been removed.
 
 Commands: `.venv/bin/python -m database.test_local` and `.venv/bin/python -m database.test_local --postgres-version 18`.
 

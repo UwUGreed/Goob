@@ -186,17 +186,40 @@ def test_message_is_draft_and_no_provider_side_effect(api, scenario):
 
 
 def test_legacy_converter_requires_review_and_preserves_source_balances(api):
-    import tempfile
-
-    from operations.db import connect, seed
-    from operations.server import snapshot
     from scripts.reconcile_demo_export import convert
 
-    with tempfile.TemporaryDirectory() as folder:
-        db = connect(folder + "/legacy.sqlite3")
-        seed(db)
-        source = snapshot(db, "demo", "owner")
-        db.close()
+    source = {
+        "simulation": True,
+        "crm": {
+            "customers": [{"id": "customer-1", "name": "Fictional Morgan"}],
+            "equipment": [
+                {
+                    "id": "hvac-1",
+                    "customer": "customer-1",
+                    "property": "Fictional Oak Lane",
+                    "trade": "HVAC",
+                    "name": "Heat pump",
+                }
+            ],
+        },
+        "agreements": {
+            "agreements": [
+                {
+                    "id": "care-v1",
+                    "equipment": "hvac-1",
+                    "trade": "HVAC",
+                    "start": "2026-01-01",
+                    "end": "2027-12-31",
+                    "discount": 10,
+                    "terms": "Fictional maintenance",
+                    "remaining": 1,
+                }
+            ]
+        },
+        "inventory": [
+            {"id": "capacitor", "name": "Capacitor", "cost": 1800, "price": 4500, "available": 6}
+        ],
+    }
     payload, report = convert(source, "a")
     staged = api.request("POST", "/imports", payload)
     assert staged["report"]["issues"]

@@ -1,15 +1,26 @@
-# Goob operations demo
+# Goob website operations API
 
-Build the combined frontend with `npm ci --prefix goob-dispatch` and `npm run build --prefix goob-dispatch`, then run `.venv/bin/python -m operations.server` from the repository root. Open http://127.0.0.1:8081 and select **Work review**. The standalone operations UI is also available at /operations; if no frontend build exists, it is served at the root.
+Build the existing frontend with `npm ci --prefix goob-dispatch` and
+`npm run build --prefix goob-dispatch`. Configure the private server `.env` with
+Tiger Cloud's native PostgreSQL `DATABASE_URL`, then run
+`python3 -m operations.database check` and `python3 -m operations.server`.
+Open http://127.0.0.1:8081 and select **Work review**.
 
-Prepare the demo proposal, review the $240 original draft versus the $180 corrected draft, then confirm work and approve. The covered visit drops from one to zero, one spare returns to stock, and the immutable approved draft and audit record persist across reloads. Try the technician/dispatcher roles to see server-side approval rejection. Export downloads the demo records as JSON.
+All work-review records come from the cloud `goob` schema. Normal connections and
+server startup do not migrate or seed. There is no local SQLite database fallback,
+SQLite import command, or supported `GOOB_DEMO_DB` override. The explicit
+`operations.database init` command creates missing schema only, without demo rows.
 
-Test: `python3 -m unittest discover -s tests -v`.
+This is still a loopback demonstration server with simulated roles and a fixed AI
+proposal. Cloud persistence is not production authentication. Dispatch map state
+and voice behavior are unchanged. The new authenticated backend is documented in
+[the v1 guide](../docs/backend/README.md); its tables and identities remain separate.
 
-Without `DATABASE_URL`, SQLite data lives at `operations/demo.sqlite3`; use `GOOB_DEMO_DB=/path/to/new.sqlite3` for a fresh scenario. Back up the database before future migrations. The server binds to loopback only and is for local demonstration, with a role simulation instead of authentication. Do not expose it publicly. Tiger Cloud is used when `DATABASE_URL` is configured; see the root README for setup, import, and connection checks.
+Work review supports atomic approval, equipment coverage, benefits, returned stock,
+integer-cent draft billing, retry protection, audit history, and JSON export. It does
+not collect payment or calculate production tax. Readiness and migration cards in
+this existing UI remain previews.
 
-Implemented: persistent transactional approval, exact coverage checks, benefit consumption, issued/installed/returned material accounting, integer-cent invoice corrections, stale-proposal checks, retry protection, module dependency checks, approval history and export.
-
-Simulated: fixed AI proposal, demo identity, seeded original invoice/material issue. Preview-only: return-visit blocker and uncertain migration row. Roadmap: real identity/branch scopes, comprehensive inventory/reservations, agreement lifecycle, communication drafts, migrations, integration adapters and dispatch synchronization.
-
-The existing dispatch frontend now includes the operations Work review dialog. Map visits and the Morgan Ellis scenario retain separate fictional identities; approval does not change dispatch simulation state. See `docs/OPERATIONS-ARCHITECTURE.md` for module ownership, assumptions and phased delivery.
+The nine workflow tests now run only against an explicitly supplied
+`GOOB_TEST_POSTGRES_URL`, creating and removing their own uniquely named schemas.
+They skip when no URL is supplied and never read the application's `.env` themselves.

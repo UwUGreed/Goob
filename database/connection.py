@@ -15,12 +15,9 @@ def connect(write=False):
     if not url:
         raise ValueError('Set GOOB_DATABASE_URL explicitly for database tooling.')
     params = parse_dsn(url)
-    host = params.get('host', '')
     mode = params.get('sslmode', 'require')
-    local = host in ('127.0.0.1', 'localhost', '::1')
     if mode not in ('require','verify-ca','verify-full'):
-        if not (local and mode=='disable' and os.environ.get('GOOB_DB_ENV')=='development'):
-            raise ValueError('TLS require/verify-ca/verify-full is required outside isolated localhost development.')
+        raise ValueError('Cloud PostgreSQL requires TLS require/verify-ca/verify-full.')
     db=psycopg2.connect(url, sslmode=mode, connect_timeout=10, application_name='goob-database-tools', cursor_factory=RealDictCursor)
     with db.cursor() as cur:
         cur.execute("SET statement_timeout='30s'")

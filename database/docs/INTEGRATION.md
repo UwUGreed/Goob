@@ -1,6 +1,6 @@
 # Future application integration — not performed
 
-The current application still uses its existing `goob` schema or SQLite path. Existing operations initialization/seeding behavior remains exactly as found; no new startup migrations or data-source queries were introduced. React dispatch remains local simulation. These new records are not wired into any API/UI/AI tool. The repository already contained uncommitted changes from the earlier connection work; this task preserves them.
+The website uses the existing cloud `goob` schema. SQLite fallback and startup initialization/seeding have been removed. The separately integrated v1 backend uses `public.*_v1`. React dispatch remains local simulation. These new records are not wired into any API/UI/AI tool. The repository already contained uncommitted changes from the earlier connection work; this task preserves them.
 
 ## Resolve the legacy/new-schema boundary
 

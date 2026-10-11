@@ -16,6 +16,10 @@ def engine_for(url=None):
     if parsed.drivername not in {"postgres", "postgresql", "postgresql+psycopg"}:
         raise RuntimeError("The operations API requires PostgreSQL; no SQLite fallback.")
     parsed = parsed.set(drivername="postgresql+psycopg")
+    mode = parsed.query.get("sslmode", "require")
+    if mode not in {"require", "verify-ca", "verify-full"}:
+        raise RuntimeError("Cloud PostgreSQL requires TLS; production requires verify-full.")
+    parsed = parsed.update_query_dict({"sslmode": mode})
     if os.environ.get("GOOB_ENV") == "production" and parsed.query.get("sslmode") != "verify-full":
         raise RuntimeError("Production requires PostgreSQL sslmode=verify-full.")
     engine = create_engine(parsed, pool_pre_ping=True, pool_size=5, max_overflow=5)

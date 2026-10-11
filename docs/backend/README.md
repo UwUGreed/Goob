@@ -1,7 +1,7 @@
 # Goob Operations API v1
 
 A separate Python backend for the Goob operations workflow. The React frontend,
-voice dispatch, original SQLite demo, and their existing APIs are unchanged.
+voice dispatch, and existing HTTP contracts are preserved. The website database now requires Tiger Cloud; its SQLite fallback has been removed.
 The entrypoint is `operations.api_v1.app:create_app`; it serves no product UI.
 
 This code is now combined with the teammate's Tiger Cloud connection and 97-table
@@ -38,10 +38,11 @@ connection settings and separate schema ownership.
 
 ## External dependencies and deliberate limits
 
-Code and local PostgreSQL tests do not establish a live cloud deployment. Configure
-Tiger Data, Gemini, an OIDC provider, and Vultr before running provider/cloud acceptance.
-No live provider credentials were available during implementation. Docker was not
-installed in the authoring environment, so the container build is not yet verified.
+The supplied Tiger Cloud connection is configured and the v1 schema is deployed;
+see [cloud cutover evidence](CLOUD-CUTOVER.md). The website uses the existing cloud
+workflow. The v1 service still needs an OIDC provider and frontend adoption. Gemini
+credentials and a Vultr deployment still require acceptance with the team's accounts.
+The container build is not yet verified.
 
 ElevenLabs, voice, dispatch scheduling/state, and frontend adoption remain with their
 existing owners. SMS/email delivery, payment processing, and accounting-provider sync
@@ -70,16 +71,18 @@ python3 -m venv .venv-backend
 .venv-backend/bin/pip install -r deploy/backend/requirements-dev.txt
 ```
 
-Use a dedicated PostgreSQL database (or the loopback-only test container):
+Use an explicitly configured Tiger Cloud connection. No database server is started
+by this repository. Load the intended migration-role URL into the environment before
+running the additive v1 migration:
 
 ```sh
-docker compose -f deploy/backend/compose.test.yaml up -d --wait
-export DATABASE_URL='postgresql+psycopg://goob_test:local_test_only@127.0.0.1:55439/goob_test'
 .venv-backend/bin/alembic -c alembic-backend.ini upgrade head
 ```
 
-The test password above is only for the disposable local test container. For Tiger
-Data use its connection details, a dedicated runtime role, and certificate verification.
+The website loads its private `.env`. For v1, pass `--env-file .env` to Uvicorn or
+export the settings explicitly. Use a dedicated runtime role and a trusted CA for
+production certificate verification.
+
 The service accepts `postgresql://`, `postgres://`, and `postgresql+psycopg://` URLs.
 It rejects SQLite and rejects production URLs without `sslmode=verify-full`.
 `GOOB_API_DATABASE_URL`, when set, overrides `DATABASE_URL` for this API and its
@@ -195,16 +198,20 @@ batch only after resolving its review flags, then stop writing the old source.
 
 ```sh
 export TEST_DATABASE_URL="$DATABASE_URL"
-.venv-backend/bin/pytest -c tests/backend_v1/pytest.ini tests/backend_v1 tests/test_operations.py
+export GOOB_TEST_POSTGRES_URL="$TEST_DATABASE_URL"
+.venv-backend/bin/pytest -c tests/backend_v1/pytest.ini tests/backend_v1 tests/test_operations.py tests/test_cloud_configuration.py
 .venv-backend/bin/ruff check --config deploy/backend/ruff.toml \
   operations/api_v1 operations/domain operations/persistence operations/integrations \
   scripts tests/backend_v1
 ```
 
-Tests require a migrated dedicated PostgreSQL database, create fictional tenant IDs,
+V1 tests require an explicit `TEST_DATABASE_URL`; website workflow tests require
+`GOOB_TEST_POSTGRES_URL`. They create and migrate a uniquely
+named schema, create fictional tenant IDs,
 and exercise signed tokens, transactions, concurrency, rollback, imports, stock,
 benefits, provider errors, and the API demo. Tests include a temporary database trigger
 to prove rollback, so run them as the test database owner, not the runtime app role.
-Mocked provider tests are labeled; they do not establish live provider connectivity.
+The test schema is removed afterward; existing application schemas are untouched.
+Without the explicit test URL, database-dependent tests skip. Mocked provider tests are labeled; they do not establish live provider connectivity.
 
 Production setup and recovery: [deployment runbook](DEPLOYMENT.md).

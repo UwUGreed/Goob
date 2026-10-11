@@ -4,8 +4,11 @@ from uuid import uuid4
 
 import jwt
 import pytest
+from alembic import command as migrations
+from alembic.config import Config
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
+from sqlalchemy import event, text
 
 from operations.api_v1.app import create_app
 from operations.domain.common import Problem
@@ -17,10 +20,35 @@ from operations.persistence.models import Branch, Membership, Tenant
 def engine():
     url = os.environ.get("TEST_DATABASE_URL")
     if not url:
-        pytest.fail("Set TEST_DATABASE_URL to a migrated dedicated PostgreSQL test database.")
+        pytest.skip(
+            "Set TEST_DATABASE_URL explicitly; tests never use the app's cloud URL implicitly."
+        )
     e = engine_for(url)
-    yield e
+    schema = "goob_test_v1_" + uuid4().hex
+    with e.begin() as connection:
+        connection.execute(text(f'CREATE SCHEMA "{schema}"'))
     e.dispose()
+
+    @event.listens_for(e, "connect")
+    def isolate(connection, _record):
+        previous = connection.autocommit
+        connection.autocommit = True
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f'SET search_path TO "{schema}", pg_catalog')
+        finally:
+            connection.autocommit = previous
+
+    try:
+        with e.connect() as connection:
+            config = Config("alembic-backend.ini")
+            config.attributes["connection"] = connection
+            migrations.upgrade(config, "head")
+        yield e
+    finally:
+        with e.begin() as connection:
+            connection.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))
+        e.dispose()
 
 
 @pytest.fixture

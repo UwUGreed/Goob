@@ -49,5 +49,5 @@ All 97 business tables have concrete SQL types/nullability, primary keys, tenant
 | Seed idempotency, as-of, edit conflicts | fixtures.py; goob_db_meta.fixture_rows | Stable IDs; all-or-nothing writes; no overwriting edits |
 | Explicit safe reset | cli.py reset --confirm-demo-reset, fixtures.reset | Isolated marker and exact verified tenant manifest required; no truncation |
 | Standalone connection check | cli.py check | Read-only, TLS-aware, no startup hooks or secret logs |
-| Database validation | verify.py, test_local.py, SQL reports | Disposable migrations, constraints, reruns, concurrency, immutability, reports, tenant-safe reset |
+| Database validation | verify.py, isolated test schemas, SQL reports | Disposable migrations, constraints, reruns, concurrency, immutability, reports, tenant-safe reset |
 | ERD/dictionary/integration guidance | docs/ERD.md, TABLES.md, ARCHITECTURE.md, INTEGRITY.md, INTEGRATION.md | Application implementation intentionally excluded |
