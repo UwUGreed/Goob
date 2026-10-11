@@ -9,7 +9,7 @@ COPY operations/persistence /app/operations/persistence
 COPY operations/integrations /app/operations/integrations
 COPY operations/migrations /app/operations/migrations
 COPY alembic-backend.ini /app/alembic-backend.ini
-COPY scripts/bootstrap_backend.py /app/scripts/bootstrap_backend.py
+COPY scripts/bootstrap_backend.py scripts/backend_preflight.py scripts/check_backend.py /app/scripts/
 USER goob
 EXPOSE 8090
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health/ready', timeout=3)"

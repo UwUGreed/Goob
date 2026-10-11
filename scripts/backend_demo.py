@@ -8,6 +8,8 @@ from uuid import uuid4
 
 import httpx
 
+from scripts.check_backend import validate_url
+
 
 def run(call, branch, use_gemini=False):
     today = datetime.now(UTC).date()
@@ -164,7 +166,7 @@ def run(call, branch, use_gemini=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--url", required=True)
+    parser.add_argument("--url", required=True, type=validate_url)
     parser.add_argument("--branch", required=True)
     parser.add_argument("--gemini", action="store_true")
     args = parser.parse_args()

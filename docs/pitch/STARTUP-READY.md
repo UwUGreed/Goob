@@ -96,9 +96,9 @@ and AI volume. Do not present an unvalidated dollar price or margin as an establ
 |---|---|---|
 | Hardware | Concept, diagram, budget assumptions, integration boundary | Pitch delivery; any organizer-specific submission requirements |
 | Startup Ready | Target/customer/problem/model/GTM/pilot packet | Customer validation, accurately described commitment, final pitch |
-| Gemini | Real provider adapter, test fixtures, review rules | Live call and measured evaluation with credentials |
-| Tiger Data | PostgreSQL schema, migration, ledger, reports | Hosted service connection and evidence |
+| Gemini | Provider adapter, test fixtures, review rules | TBD by team decision; no live-provider claim |
+| Tiger Data | Verified cloud connection, deployed schema, persistence regression tests | Show the integrated website's persisted workflow |
 | Vultr | Backend deployment files and recovery runbook | Build, deploy, HTTPS, runtime verification |
-| ElevenLabs | Ownership recorded; code untouched | Existing team's spoken briefing demonstration |
+| ElevenLabs | Ownership recorded; code untouched | TBD with voice teammate |
 
 Technical tests are evidence of tested behavior, not proof of customer demand or award eligibility.

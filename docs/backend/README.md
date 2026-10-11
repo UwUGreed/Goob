@@ -8,6 +8,9 @@ This code is now combined with the teammate's Tiger Cloud connection and 97-tabl
 foundation. See [database integration](DATABASE-INTEGRATION.md) for the shared
 connection settings and separate schema ownership.
 
+Frontend adoption, login setup, and repeatable checks: [team handoff](TEAM-HANDOFF.md).
+Gemini and ElevenLabs live integration are currently TBD by team decision.
+
 ## Implemented scope
 
 - PostgreSQL/Tiger Data-compatible schema, versioned Alembic migration, tenant/branch
@@ -127,6 +130,7 @@ the same request returns the stored response after current authorization is chec
 | `/jobs/{id}/proposals`, `/proposals/{id}`, `/proposals/{id}/review` | Manual/Gemini proposals and employee review |
 | `/jobs/{id}/history`, `/equipment/{id}/history`, `/jobs/{id}/reverse` | Evidence and explicit correction |
 | `/jobs/{id}/readiness` | Read-only prerequisite evaluation; no dispatch mutation |
+| `/jobs/{id}/workspace` | Read-only linked customer/equipment, coverage, stock, review, invoice and audit context |
 | `/imports`, `/imports/csv`, `/imports/{id}/rows/{index}`, `/imports/{id}/commit` | Stage, review, resolve, commit |
 | `/records/opportunities`, `/opportunities/{id}/{convert,dismiss}` | Cross-trade follow-up review |
 | `/admin/members/{OIDC-subject}`, `/admin/modules` | Owner-controlled access and module configuration |

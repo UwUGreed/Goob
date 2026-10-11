@@ -66,5 +66,6 @@ or implicitly target the shared cloud-backed website. Then run:
 `npm run test:e2e --prefix goob-dispatch`.
 
 [Cloud cutover evidence](docs/backend/CLOUD-CUTOVER.md) ·
+[Team integration handoff](docs/backend/TEAM-HANDOFF.md) ·
 [Database foundation](database/README.md) ·
 [Original dispatch journey](goob-dispatch/README.md)

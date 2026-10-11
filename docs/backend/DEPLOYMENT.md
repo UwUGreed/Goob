@@ -39,12 +39,20 @@ docker compose -f deploy/backend/compose.yaml up -d api proxy
    subject, or provision it beforehand with the same schema. Grant subsequent users
    through the authenticated admin endpoint after creating/inviting them in the chosen
    OIDC provider. Provider-specific login/invitation UI is outside this backend.
+   Run `python -m scripts.backend_preflight --production --online` inside the API
+   container before acceptance. It checks configuration, TLS, schema and basic runtime
+   role restrictions without writing data or revealing credential values.
 7. Inspect `/health/live` and `/health/ready`, then use a real access token to create/read
    records in an isolated demo tenant. Anonymous business requests must return 401;
    cross-tenant and revoked-user attempts must fail. Run the API demo, review a live
    Gemini proposal, and confirm persistence after restarting `api`.
 8. Record image digest, commit, schema revision, deploy time, provider/model, and the
    acceptance results in a release manifest. Never put credentials in that manifest.
+
+For a read-only authenticated smoke check, set `GOOB_ACCESS_TOKEN` and
+`GOOB_TENANT_ID` in the operator environment and run
+`python -m scripts.check_backend --url https://API_HOST --job-id JOB_ID`.
+Gemini and ElevenLabs remain TBD; omit their live claims until separately verified.
 
 No Terraform/API call in this repository automatically purchases or provisions a VM.
 The Docker build copies only the new backend, migrations, and bootstrap command; it

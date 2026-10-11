@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from pydantic import Field
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from operations.api_v1.auth import OIDCVerifier
@@ -39,6 +39,7 @@ from operations.domain import (
     opportunities,
     readiness,
     workflow,
+    workspace,
 )
 from operations.domain.common import Problem, command, dump, event, get, module, record
 from operations.integrations.gemini import Gemini
@@ -58,6 +59,7 @@ from operations.persistence.models import (
     now,
     uid,
 )
+from operations.persistence.readiness import check_schema
 
 
 class Reason(Strict):
@@ -98,7 +100,7 @@ def create_app(engine=None, verifier=None, gemini=None):
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[v for v in os.environ.get("ALLOWED_ORIGINS", "").split(",") if v],
+        allow_origins=[v.strip() for v in os.environ.get("ALLOWED_ORIGINS", "").split(",") if v.strip()],
         allow_methods=["GET", "POST", "PATCH"],
         allow_headers=["Authorization", "Content-Type", "X-Tenant-ID", "Idempotency-Key"],
         expose_headers=["X-Request-ID"],
@@ -190,10 +192,9 @@ def create_app(engine=None, verifier=None, gemini=None):
     def ready():
         try:
             with engine.connect() as conn:
-                conn.execute(text("SELECT 1 FROM alembic_version"))
-                conn.execute(text("SELECT 1 FROM tenants_v1 LIMIT 1"))
+                check_schema(conn)
             return {"status": "ready"}
-        except SQLAlchemyError:
+        except (SQLAlchemyError, RuntimeError):
             return JSONResponse(status_code=503, content={"status": "unready"})
 
     prefix = "/api/v1"
@@ -570,6 +571,15 @@ def create_app(engine=None, verifier=None, gemini=None):
     def job_readiness(identifier: str, db=Depends(session), user=Depends(actor)):
         check(db, user, "readiness")
         return readiness.evaluate(db, user, identifier)
+
+    @app.get(prefix + "/jobs/{identifier}/workspace")
+    def job_workspace(
+        identifier: str,
+        limit: int = Query(default=50, ge=1, le=100),
+        db=Depends(session),
+        user=Depends(actor),
+    ):
+        return workspace.read(db, user, identifier, limit)
 
     @app.post(prefix + "/imports")
     def stage_import(

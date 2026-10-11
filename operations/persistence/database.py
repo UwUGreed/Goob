@@ -22,7 +22,13 @@ def engine_for(url=None):
     parsed = parsed.update_query_dict({"sslmode": mode})
     if os.environ.get("GOOB_ENV") == "production" and parsed.query.get("sslmode") != "verify-full":
         raise RuntimeError("Production requires PostgreSQL sslmode=verify-full.")
-    engine = create_engine(parsed, pool_pre_ping=True, pool_size=5, max_overflow=5)
+    engine = create_engine(
+        parsed,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=5,
+        connect_args={"connect_timeout": 10},
+    )
 
     @event.listens_for(engine, "connect")
     def initialize_session(connection, _record):
