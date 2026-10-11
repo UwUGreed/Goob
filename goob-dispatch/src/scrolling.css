@@ -1,0 +1,38 @@
+/* One document scrollbar for long pages; independent lists remain scrollable. */
+@media screen {
+  html { overflow-y: auto; scrollbar-width: thin; scrollbar-color: #ad94a8 #faf8f2; }
+  body .desk-layout .desk-main {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .desk-main > .operations-page,
+  .desk-main > .expansion-page,
+  .desk-main > .invoice-page {
+    flex: none;
+    width: 100%;
+    min-height: 0;
+    overflow: visible;
+  }
+  body .desk-layout .sidebar nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  body .desk-layout .sidebar nav::-webkit-scrollbar { display: none; }
+  body .desk-layout .sidebar nav button { flex-shrink: 0; }
+  .sidebar > .brand, .sidebar > .workspace-label, .sidebar > .sidebar-bottom { flex-shrink: 0; }
+  :is(.widget-content,.records-scroll,.queue-scroll,.timeline-scroll,.expansion-list,.expansion-pre,.invoice-list,.view-drawer,.workspace-editor) {
+    scrollbar-width: thin;
+    scrollbar-color: #ad94a8 transparent;
+  }
+  :is(html,.widget-content,.records-scroll,.queue-scroll,.timeline-scroll,.expansion-list,.expansion-pre,.invoice-list,.view-drawer,.workspace-editor)::-webkit-scrollbar { width: 7px; height: 7px; }
+  :is(html,.widget-content,.records-scroll,.queue-scroll,.timeline-scroll,.expansion-list,.expansion-pre,.invoice-list,.view-drawer,.workspace-editor)::-webkit-scrollbar-thumb { background: #ad94a8; border-radius: 6px; }
+  :is(html,.widget-content,.records-scroll,.queue-scroll,.timeline-scroll,.expansion-list,.expansion-pre,.invoice-list,.view-drawer,.workspace-editor)::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+  @media (max-width: 760px) {
+    body .desk-layout .sidebar nav { overflow-x: auto; overflow-y: hidden; }
+  }
+}
