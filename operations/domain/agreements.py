@@ -7,6 +7,12 @@ from operations.persistence.models import Agreement, Benefit, Terms, now, uid
 
 
 def balance(db, tenant, identifier, day=None):
+    agreement = db.get(Agreement, (tenant, identifier))
+    if agreement and agreement.portal_meta.get("configuration"):
+        from operations.domain import service_memberships
+        effective = day or now().date()
+        terms = service_memberships.current_terms(db, agreement, effective)
+        return service_memberships.remaining(db, agreement, terms, effective) if terms else 0
     return db.scalar(
         select(func.coalesce(func.sum(Benefit.amount), 0)).where(
             Benefit.tenant_id == tenant,
@@ -58,6 +64,17 @@ def create(db, actor, values):
 
 
 def coverage(db, actor, job):
+    # Portal plans use explicit per-charge rules and maintenance-only allowances.
+    portal = db.scalar(select(Agreement).where(Agreement.tenant_id==actor.tenant,Agreement.equipment_id==job.equipment_id,Agreement.portal_meta["planId"].astext.is_not(None)))
+    if portal:
+        from operations.domain import service_memberships
+        result=service_memberships.eligibility(db,actor,job)
+        if not result["eligible"]:
+            return {"state":"uncovered","matches":0}
+        a=get(db,actor,Agreement,result["membershipId"])
+        t=service_memberships.current_terms(db,a,date.fromisoformat(job.data["service_date"]))
+        consumed=db.scalar(select(func.coalesce(func.sum(Benefit.amount),0)).where(Benefit.tenant_id==actor.tenant,Benefit.agreement_id==a.id,Benefit.job_id==job.id))<0
+        return {"state":"covered" if job.data["service"]!="maintenance" or result["remaining"]>0 or consumed else "exhausted","agreement_id":a.id,"agreement_revision":a.revision,"terms_id":t.id,"discount":0,"discountRules":result["discountRules"],"remaining":result["remaining"],"terms":t.description,"portal_membership":True}
     day = date.fromisoformat(job.data["service_date"])
     pairs = db.execute(
         select(Agreement, Terms)
@@ -69,6 +86,7 @@ def coverage(db, actor, job):
             Agreement.equipment_id == job.equipment_id,
             Agreement.trade == job.data["trade"],
             Agreement.service == job.data["service"],
+            Agreement.status != "pending",
             Terms.starts <= day,
             (Agreement.canceled_on.is_(None)) | (Agreement.canceled_on > day),
         )

@@ -88,6 +88,7 @@ class Record(Scoped, Base):
     """Typed CRM/job/catalog records; schemas and hierarchy are validated by domain services."""
 
     __tablename__ = "records_v1"
+    portal_meta: Mapped[dict] = mapped_column(JSONB, default=dict)
     kind: Mapped[str] = mapped_column(String, index=True)
     name: Mapped[str]
     parent_id: Mapped[str | None] = mapped_column(String)
@@ -109,6 +110,7 @@ class Record(Scoped, Base):
 
 class Agreement(Scoped, Base):
     __tablename__ = "agreements_v1"
+    portal_meta: Mapped[dict] = mapped_column(JSONB, default=dict)
     equipment_id: Mapped[str]
     trade: Mapped[str]
     service: Mapped[str]
@@ -333,3 +335,11 @@ class DispatchVisit(Scoped, Base):
     end: Mapped[int | None] = mapped_column(BigInteger)
     travel_start: Mapped[int | None] = mapped_column(BigInteger)
     __table_args__ = (branch_fk(), record_fk("job_id"), UniqueConstraint("tenant_id", "job_id"), ForeignKeyConstraint(["tenant_id", "technician_id"], ["dispatch_technicians_v1.tenant_id", "dispatch_technicians_v1.id"]), CheckConstraint("status IN ('Unassigned','Assigned','En route','Arrived','Working','Completed')"))
+
+
+class ServicePlan(Scoped, Base):
+    __tablename__ = "service_plans_v1"
+    name: Mapped[str]
+    configuration: Mapped[dict] = mapped_column(JSONB, default=dict)
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+    __table_args__ = (branch_fk(),)

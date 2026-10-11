@@ -43,8 +43,9 @@ export function useDispatchController(selection:Selection,realMap:boolean){
         else{const t=current.current.technicians[action.techId],origin=t.driving?geoPosition(t.driving.coordinates,1):realStops[t.node];driving=await fetchDrivingRoute(origin,realStops[depot]);}
       }
       // Remove any client-provided route data from requests to the approval API.
-      const body=action.type==='assign'?{type:action.type,techId:action.techId,jobId:action.jobId,...(action.slot?{slot:action.slot}:{})}:action.type==='create'||action.type==='edit'||action.type==='customer'||action.type==='stock'?action:{type:action.type,techId:action.techId};
-      const saved=await api<{state:Simulation}>('/api/dispatch',body);if(action.type==='create'||action.type==='edit'||action.type==='customer'||action.type==='stock'){local({type:'replace',state:{...saved.state,technicians:current.current.technicians,speed:current.current.speed}});return true;}
+      const operational=["membership","property","movement","job-review","create","edit","customer","stock"].includes(action.type);
+      const body=operational?action:action.type==='assign'?{type:action.type,techId:action.techId,jobId:action.jobId,...(action.slot?{slot:action.slot}:{})}:action.type==='create'||action.type==='edit'||action.type==='customer'||action.type==='stock'?action:{type:action.type,techId:"techId" in action?action.techId:undefined};
+      const saved=await api<{state:Simulation}>('/api/dispatch',body);if(operational){local({type:'replace',state:{...saved.state,technicians:Object.fromEntries(Object.entries(saved.state.technicians).map(([id,t])=>[id,current.current.technicians[id]?.status===t.status&&current.current.technicians[id]?.jobId===t.jobId?current.current.technicians[id]:t])),speed:current.current.speed}});return true;}
       const visual=reducer(current.current,action.type==='assign'||action.type==='return'?{...action,driving}:action);local({type:'replace',state:{...saved.state,technicians:visual.technicians,speed:visual.speed}});if(action.type==='assign'||action.type==='return')arrivals.current.delete(action.techId);return true;
     }catch(e){if(alive.current)setError(e instanceof Error?e.message:'Dispatch action failed.');return false;}
     finally{locked.current=false;if(alive.current)setPending(false);}

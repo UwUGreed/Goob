@@ -5,7 +5,7 @@ from sqlalchemy import select
 from operations.api_v1.schemas import Extraction
 from operations.domain import agreements, billing, inventory
 from operations.domain.common import Problem, dump, event, get, record
-from operations.persistence.models import Benefit, Invoice, Note, Proposal, Record, uid
+from operations.persistence.models import Agreement, Benefit, Invoice, Note, Proposal, Record, uid
 
 
 def validate_extraction(db, actor, job, note, extraction):
@@ -152,7 +152,10 @@ def review(db, actor, identifier, payload):
         ).all()
         if any(inventory.outstanding(db, actor, job.id, sku, location) for sku, location in pairs):
             raise Problem("Record disposition of every issued part before confirming work.")
-        if mode == "membership":
+        if mode == "membership" and coverage.get("portal_membership"):
+            from operations.domain import service_memberships
+            service_memberships.reconcile(db,actor,job,True,f"Confirmed proposal {p.id}")
+        elif mode == "membership" and job.data["service"]=="maintenance":
             db.add(
                 Benefit(
                     tenant_id=actor.tenant,
@@ -249,6 +252,9 @@ def reverse(db, actor, job_id, reason):
                 reason=f"Reversal of {entry.id}: {reason}",
             )
         )
+    from operations.domain import service_memberships
+    if any(a.portal_meta.get("planId") for a in db.scalars(select(Agreement).where(Agreement.tenant_id==actor.tenant,Agreement.equipment_id==job.equipment_id))):
+        service_memberships.reconcile(db,actor,job,False,reason)
     last.state = "reversed"
     last.revision += 1
     job.data = job.data | {"work_state": "reopened"}

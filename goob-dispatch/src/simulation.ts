@@ -4,7 +4,7 @@ import { findRoute, routeLength } from './routing';
 import { allJobs, proposedSlot, slotAllowed } from './schedule';
 import type { Job, Customer, StockItem, ScheduleSlot, Simulation, TechState } from './types';
 import type { DrivingRoute } from './integrations/geography';
-export type Action = {type:'customer';customer:Customer}|{type:'stock';item:StockItem}|{type:'edit';job:Job}| {type:'assign';techId:string;jobId:string;slot?:ScheduleSlot;driving?:DrivingRoute} | {type:'start'|'pause'|'replay'|'work'|'complete'|'return';techId:string;driving?:DrivingRoute} | {type:'create';job:Job} | {type:'tick';dt:number} | {type:'speed';speed:number} | {type:'reset'} | {type:'replace';state:Simulation} | {type:'preview';preview:Simulation['preview']};
+export type Action = {type:"membership";operation:string;values:Record<string,unknown>}|{type:"property"|"movement"|"job-review";values:Record<string,unknown>}|{type:'customer';customer:Customer}|{type:'stock';item:StockItem}|{type:'edit';job:Job}| {type:'assign';techId:string;jobId:string;slot?:ScheduleSlot;driving?:DrivingRoute} | {type:'start'|'pause'|'replay'|'work'|'complete'|'return';techId:string;driving?:DrivingRoute} | {type:'create';job:Job} | {type:'tick';dt:number} | {type:'speed';speed:number} | {type:'reset'} | {type:'replace';state:Simulation} | {type:'preview';preview:Simulation['preview']};
 export function initialState():Simulation {
   return {customers:customerFixtures,stock:stockFixtures,speed:1,technicians:Object.fromEntries(technicians.map(t=>[t.id,{status:t.id==='jordan'?'Working':'Available',node:t.start,jobId:t.id==='jordan'?'cedar':undefined,route:[],progress:0,running:false,duration:0}])),jobs:Object.fromEntries(jobs.map(j=>[j.id,j.id==='cedar'?'Working':'Unassigned']))};
 }
@@ -58,6 +58,7 @@ export function reducer(state:Simulation,action:Action):Simulation {
     });
     return next;
   }
+  if (!("techId" in action)) return state;
   const t=state.technicians[action.techId]; if(!t) return state;
   let updated={...t}; const jobStates={...state.jobs};
   if(action.type==='assign') {

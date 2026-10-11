@@ -115,15 +115,30 @@ Live local checks with the supplied credentials returned a real Google driving r
 Presentation refinements: Ask Goob accepts typed requests directly on the board, with microphone transcription and spoken availability replies in its dialog. Requests show their interpretation before separate assignment approval. Arrived journeys offer a local travel replay; replay never approves another visit, changes its arrived status, or increments visits completed. The job panel keeps its primary action outside its scrollable content. Manual map exploration pauses following and automatic route framing until a new selection or explicit recenter.
 
 
-## Operations pages
+## Operations and customer service memberships
 
-Overview is available at /overview; / and /today redirect there. Customers, Jobs and Inventory have list and detail routes (/customers/:id, /jobs/:id, /inventory/:id). Dispatch accepts ?job=:id and retains selection through navigation and refresh. Unknown routes show a not-found view.
+The authenticated portal reads and writes PostgreSQL through `/api/dispatch`; there is no local fixture fallback. Dispatch, authentication, the landing page and provider integrations remain in place.
 
-All pages share the dispatch simulation records. Local preview is visibly a demo and saves customer, job, inventory and assignment records on this device. Hosted authenticated sessions use the existing dispatch API and database store. Authentication enforcement remains on the server. There is no separate login route in this app.
+- `/overview`: asymmetric daily brief with urgent work, maintenance due, renewals, unresolved visit reviews, today's schedule, technician availability and stock attention.
+- `/customers` and `/customers/:id`: searchable directory, contact and account details, selectable properties, equipment, explicit coverage and chronological work history. Customer/property forms persist, and Create job prefills the selected property.
+- `/jobs` and `/jobs/:id`: counted status groups, trade/search filters, friendly visit numbers and a Coverage / Work / Materials / Charge review / Completion workspace. Dispatch handles assignment and visit transitions. Notes and reviewed charge proposals persist. No-charge visits can be reviewed too.
+- `/inventory` and `/inventory/:id`: location stock, available/reserved balances and a movement ledger. Receiving, transfers, reservation consumption, unused returns and adjustments use the existing inventory services. Completion installs outstanding issued materials exactly once. Negative stock and repeated consumption are rejected.
+- `/memberships` and `/memberships/:id`: plan configuration, equipment enrollment, status/payment editing, cancellation, manual renewal, care queues and benefit history. Each enrollment covers one explicit equipment unit at its property. Multiple units require explicit enrollments. Plan edits do not silently change existing enrollment rules.
 
-Truck parts are reserved for approved active jobs, consumed once on completion, and cannot be reduced below reservations. Warehouse stock does not count as truck-ready stock. Use separate location records and stock adjustments to record stock movement. Custom service addresses require choosing a clearly labelled existing demo route destination; arbitrary addresses are not geocoded. Fixture contact details are intentionally left unknown.
+Apply the additive migration and connected seed from the repository root:
 
-Checks: npm run build (TypeScript, Vite, Worker), npm test, and npx playwright test e2e/dispatch.spec.ts e2e/operations.spec.ts. No lint script is configured.
+```sh
+.venv/Scripts/python.exe -m alembic -c alembic-backend.ini upgrade head
+.venv/Scripts/python.exe -m scripts.seed_service_memberships
+```
+
+`20261012_service_memberships` adds reusable service plans and JSON portal metadata to existing CRM and agreement rows. It retains all existing records. The repeatable seed targets only the demo-labelled `goob` account. Alex Morgan has a covered home and uncovered rental, two included HVAC maintenance visits, and 15% eligible repair labor discounts. The $180 labor / $45 part repair proposes $198 before tax and leaves the maintenance allowance unchanged. Completing eligible maintenance consumes one visit; repeated completion cannot consume it again. Corrections reconcile benefits with ledger entries. Historical use remains recorded after membership cancellation. Future renewal grants do not change the current term balance; allowances do not roll over. Payment status is independent and no payment is collected automatically.
+
+Verification fixtures use explicit `portal_meta.verification` metadata, with opt-in presentation filters. The seed classifies the known historical `portal-cloud.spec.ts` fixture records without deleting them. API-created test fixtures can set `verification: true` explicitly. Database IDs remain unchanged. The seed does not reset completed jobs, balances or edited customer records.
+
+Frontend checks: `npm test` and `npm run build` in this folder. Database regression checks: `TEST_DATABASE_URL=... .venv/Scripts/python.exe -m pytest tests/backend_v1 -q` from the root. Database tests create/drop only a unique isolated schema. The read-only connected-demo browser review runs from this folder with `GOOB_E2E_BASE_URL=http://127.0.0.1:8090 npx playwright test --config playwright.memberships.config.ts`; credentials are read from the ignored private demo credential file. It disables external map/voice providers and verifies desktop/mobile routes, property eligibility, prefills, charge proposals, forms, keyboard dismissal, refresh and Dispatch links. Screenshots go to `test-results/`.
+
+Completion corrections for installed parts require the existing material disposition/work review path; the portal refuses to silently undo physical stock installation. Tax calculations and payment collection remain outside this release.
 
 ## Backend work review
 

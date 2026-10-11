@@ -48,6 +48,8 @@ def review(job, coverage, materials, dismissed=None):
             if line["treatment"] not in {"included", "warranty"}
             else 0
         )
+        if coverage.get("portal_membership"):
+            discount = next((r["percent"] for r in coverage.get("discountRules",[]) if r["kind"]==line["kind"] and r["service"]==job.data["service"]),0) if job.data["billing_mode"]=="membership" else 0
         reduction = 0
         if discount and line["discount_eligible"] and line["treatment"] == "billable":
             code = f"MEMBERSHIP_DISCOUNT:{index}"
