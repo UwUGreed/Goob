@@ -99,6 +99,8 @@ Do not point the original React client at v1 without coordinating its contract a
 ## API contract
 
 OpenAPI: `/api/v1/openapi.json`; interactive API docs: `/api/v1/docs`.
+In the API docs, click **Authorize** and enter the access token without the `Bearer`
+prefix. Enter the company ID in each request's `x-tenant-id` field.
 Every business endpoint requires `Authorization: Bearer <access token>` and
 `X-Tenant-ID: <authorized tenant>`. Every mutation also requires an `Idempotency-Key`.
 Reusing a key for a different actor, operation, or payload returns 409. Reusing it for
@@ -129,6 +131,10 @@ records from disabled modules within authorized branches.
 
 API errors are sanitized and include a request ID. No arbitrary tenant/role header
 grants access. Runtime API does not accept the old `X-Demo-Role` identity simulation.
+Default dates for balances, adjustments, agreement changes, and obligations use UTC,
+independent of the server's timezone. Coverage uses the explicitly supplied job service
+date; obligations also accept an explicit `as_of` date. Tenant-local default dates
+require a future timezone setting.
 
 ## Gemini and demonstration
 

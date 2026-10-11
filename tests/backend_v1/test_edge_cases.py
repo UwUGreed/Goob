@@ -1,9 +1,56 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import select
 
+from operations.domain import agreements
+from operations.persistence import models
 from operations.persistence.database import sessions
 from operations.persistence.models import Event, Terms
+
+
+def test_benefit_dates_do_not_depend_on_server_timezone(api, scenario, monkeypatch):
+    instant = datetime(2027, 1, 2, 0, 30, tzinfo=timezone.utc)
+
+    class PreviousLocalDay(date):
+        @classmethod
+        def today(cls):
+            return date(2027, 1, 1)
+
+    monkeypatch.setattr(agreements, "date", PreviousLocalDay)
+    monkeypatch.setattr(agreements, "now", lambda: instant)
+    monkeypatch.setattr(models, "now", lambda: instant)
+    created = api.request(
+        "POST",
+        "/agreements",
+        {
+            "equipment_id": scenario["plumbing"]["id"],
+            "trade": "Plumbing",
+            "service": "inspection",
+            "terms": {
+                "starts": "2027-01-02",
+                "ends": "2027-12-31",
+                "grant": 1,
+                "discount": 0,
+                "description": "UTC effective date",
+            },
+        },
+        expected=201,
+    )
+    identifier = created["agreement"]["id"]
+    assert api.request("GET", f"/agreements/{identifier}")["remaining"] == 1
+    api.request(
+        "POST",
+        f"/agreements/{identifier}/commands",
+        {
+            "action": "adjust",
+            "expected_revision": 1,
+            "amount": 1,
+            "reason": "Verify adjustment default uses the same UTC day",
+        },
+    )
+    result = api.request("GET", f"/agreements/{identifier}")
+    assert result["remaining"] == 2
+    assert all(entry["effective_on"] == "2027-01-02" for entry in result["ledger"])
 
 
 def test_cross_trade_benefit_and_frozen_upgrade(api, scenario, engine):

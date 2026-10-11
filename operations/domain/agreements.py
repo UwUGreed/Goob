@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy import func, select
 
 from operations.domain.common import Problem, dump, event, get, record
-from operations.persistence.models import Agreement, Benefit, Terms, uid
+from operations.persistence.models import Agreement, Benefit, Terms, now, uid
 
 
 def balance(db, tenant, identifier, day=None):
@@ -11,7 +11,7 @@ def balance(db, tenant, identifier, day=None):
         select(func.coalesce(func.sum(Benefit.amount), 0)).where(
             Benefit.tenant_id == tenant,
             Benefit.agreement_id == identifier,
-            (Benefit.effective_on <= (day or date.today())) | (Benefit.amount < 0),
+            (Benefit.effective_on <= (day or now().date())) | (Benefit.amount < 0),
         )
     )
 
@@ -122,16 +122,16 @@ def change(db, actor, identifier, payload):
         if action == "renew" and terms["starts"] <= versions[-1].ends:
             raise Problem("Renewal must start after the current term.")
         if action == "upgrade":
-            if terms["starts"] < date.today():
+            if terms["starts"] < now().date():
                 raise Problem("Retroactive upgrades require manual historical reconciliation.")
             # Keep the original terms immutable. Coverage selects effective versions.
         add_terms(db, actor, agreement, terms)
     elif action == "cancel":
         effective = payload.get("effective_date")
-        if not effective or effective < date.today():
+        if not effective or effective < now().date():
             raise Problem("Cancellation requires a present or future effective date.")
         agreement.canceled_on = effective
-        agreement.status = "canceled" if effective <= date.today() else "cancellation_scheduled"
+        agreement.status = "canceled" if effective <= now().date() else "cancellation_scheduled"
     elif action == "adjust":
         if balance(db, actor.tenant, identifier) + payload["amount"] < 0:
             raise Problem("Adjustment would create a negative benefit balance.")

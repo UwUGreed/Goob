@@ -41,17 +41,12 @@
       "get": {
         "summary": "Me",
         "operationId": "me_api_v1_me_get",
-        "parameters": [
+        "security": [
           {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
-            }
-          },
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
           {
             "name": "x-tenant-id",
             "in": "header",
@@ -89,6 +84,11 @@
       "get": {
         "summary": "List Records",
         "operationId": "list_records_api_v1_records__kind__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "kind",
@@ -134,16 +134,6 @@
             }
           },
           {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
-            }
-          },
-          {
             "name": "x-tenant-id",
             "in": "header",
             "required": false,
@@ -178,6 +168,11 @@
       "post": {
         "summary": "Create Record",
         "operationId": "create_record_api_v1_records__kind__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "kind",
@@ -196,16 +191,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -255,6 +240,11 @@
       "get": {
         "summary": "Read Record",
         "operationId": "read_record_api_v1_records__kind___identifier__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "kind",
@@ -272,16 +262,6 @@
             "schema": {
               "type": "string",
               "title": "Identifier"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -319,6 +299,11 @@
       "patch": {
         "summary": "Patch Record",
         "operationId": "patch_record_api_v1_records__kind___identifier__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "kind",
@@ -346,16 +331,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -405,6 +380,11 @@
       "post": {
         "summary": "New Agreement",
         "operationId": "new_agreement_api_v1_agreements_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "idempotency-key",
@@ -414,16 +394,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -473,6 +443,11 @@
       "get": {
         "summary": "Read Agreement",
         "operationId": "read_agreement_api_v1_agreements__identifier__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -481,16 +456,6 @@
             "schema": {
               "type": "string",
               "title": "Identifier"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -530,6 +495,11 @@
       "post": {
         "summary": "Agreement Command",
         "operationId": "agreement_command_api_v1_agreements__identifier__commands_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -548,16 +518,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -607,6 +567,11 @@
       "get": {
         "summary": "Job Coverage",
         "operationId": "job_coverage_api_v1_jobs__identifier__coverage_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -615,16 +580,6 @@
             "schema": {
               "type": "string",
               "title": "Identifier"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -664,6 +619,11 @@
       "get": {
         "summary": "Obligations",
         "operationId": "obligations_api_v1_obligations_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "as_of",
@@ -680,16 +640,6 @@
                 }
               ],
               "title": "As Of"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -729,6 +679,11 @@
       "get": {
         "summary": "Equipment History",
         "operationId": "equipment_history_api_v1_equipment__identifier__history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -737,16 +692,6 @@
             "schema": {
               "type": "string",
               "title": "Identifier"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -786,6 +731,11 @@
       "get": {
         "summary": "Accounting Export",
         "operationId": "accounting_export_api_v1_invoices__identifier__accounting_export_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -794,16 +744,6 @@
             "schema": {
               "type": "string",
               "title": "Identifier"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -843,6 +783,11 @@
       "post": {
         "summary": "Inventory Command",
         "operationId": "inventory_command_api_v1_inventory_commands_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "idempotency-key",
@@ -852,16 +797,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -911,17 +846,12 @@
       "get": {
         "summary": "Stock Balances",
         "operationId": "stock_balances_api_v1_inventory_balances_get",
-        "parameters": [
+        "security": [
           {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
-            }
-          },
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
           {
             "name": "x-tenant-id",
             "in": "header",
@@ -959,6 +889,11 @@
       "get": {
         "summary": "Barcode Lookup",
         "operationId": "barcode_lookup_api_v1_inventory_barcodes__barcode__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "barcode",
@@ -967,16 +902,6 @@
             "schema": {
               "type": "string",
               "title": "Barcode"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1016,6 +941,11 @@
       "post": {
         "summary": "Propose",
         "operationId": "propose_api_v1_jobs__identifier__proposals_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1034,16 +964,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1093,6 +1013,11 @@
       "get": {
         "summary": "Read Proposal",
         "operationId": "read_proposal_api_v1_proposals__identifier__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1101,16 +1026,6 @@
             "schema": {
               "type": "string",
               "title": "Identifier"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1150,6 +1065,11 @@
       "post": {
         "summary": "Review Proposal",
         "operationId": "review_proposal_api_v1_proposals__identifier__review_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1168,16 +1088,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1227,6 +1137,11 @@
       "post": {
         "summary": "Reverse Job",
         "operationId": "reverse_job_api_v1_jobs__identifier__reverse_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1245,16 +1160,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1304,6 +1209,11 @@
       "get": {
         "summary": "History",
         "operationId": "history_api_v1_jobs__identifier__history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1312,16 +1222,6 @@
             "schema": {
               "type": "string",
               "title": "Identifier"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1361,6 +1261,11 @@
       "get": {
         "summary": "Job Readiness",
         "operationId": "job_readiness_api_v1_jobs__identifier__readiness_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1369,16 +1274,6 @@
             "schema": {
               "type": "string",
               "title": "Identifier"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1418,6 +1313,11 @@
       "post": {
         "summary": "Stage Import",
         "operationId": "stage_import_api_v1_imports_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "idempotency-key",
@@ -1427,16 +1327,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1486,6 +1376,11 @@
       "post": {
         "summary": "Stage Csv",
         "operationId": "stage_csv_api_v1_imports_csv_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "idempotency-key",
@@ -1495,16 +1390,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1554,6 +1439,11 @@
       "get": {
         "summary": "Read Import",
         "operationId": "read_import_api_v1_imports__identifier__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1562,16 +1452,6 @@
             "schema": {
               "type": "string",
               "title": "Identifier"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1611,6 +1491,11 @@
       "post": {
         "summary": "Resolve Import",
         "operationId": "resolve_import_api_v1_imports__identifier__rows__index__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1638,16 +1523,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1697,6 +1572,11 @@
       "post": {
         "summary": "Commit Import",
         "operationId": "commit_import_api_v1_imports__identifier__commit_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1715,16 +1595,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1764,6 +1634,11 @@
       "post": {
         "summary": "Convert Opportunity",
         "operationId": "convert_opportunity_api_v1_opportunities__identifier__convert_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1782,16 +1657,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1841,6 +1706,11 @@
       "post": {
         "summary": "Dismiss Opportunity",
         "operationId": "dismiss_opportunity_api_v1_opportunities__identifier__dismiss_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "identifier",
@@ -1859,16 +1729,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1918,6 +1778,11 @@
       "post": {
         "summary": "Set Member",
         "operationId": "set_member_api_v1_admin_members__subject__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "subject",
@@ -1936,16 +1801,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -1995,6 +1850,11 @@
       "post": {
         "summary": "Set Modules",
         "operationId": "set_modules_api_v1_admin_modules_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "idempotency-key",
@@ -2004,16 +1864,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -2063,6 +1913,11 @@
       "get": {
         "summary": "Operational Report",
         "operationId": "operational_report_api_v1_analytics_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "start",
@@ -2096,16 +1951,6 @@
                 }
               ],
               "title": "End"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -2145,17 +1990,12 @@
       "get": {
         "summary": "Export",
         "operationId": "export_api_v1_export_get",
-        "parameters": [
+        "security": [
           {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
-            }
-          },
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
           {
             "name": "x-tenant-id",
             "in": "header",
@@ -2193,6 +2033,11 @@
       "post": {
         "summary": "Message Draft",
         "operationId": "message_draft_api_v1_message_drafts_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "idempotency-key",
@@ -2202,16 +2047,6 @@
               "type": "string",
               "default": "",
               "title": "Idempotency-Key"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Authorization"
             }
           },
           {
@@ -3332,6 +3167,12 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

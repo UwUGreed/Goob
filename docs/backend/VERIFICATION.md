@@ -2,10 +2,17 @@
 
 Verified locally on October 10, 2026, using Python 3.14 and PostgreSQL 18.
 
-- **42 tests passed:** 33 new backend tests and all 9 existing operations tests.
+- **44 tests passed:** 35 new backend tests and all 9 existing operations tests.
   Coverage includes authorization, concurrent stock reservations and approvals,
   transaction rollback, idempotency, effective-dated benefits, imports, reversal,
   archive restrictions, provider failure handling, and the API demonstration.
+- Follow-up screen verification exercised the real HTTP service and PostgreSQL with
+  a local HTTPS JWKS fixture and the production token verifier. Swagger authenticated
+  requests returned 200 after correcting its bearer-security declaration. A UTC/local
+  midnight mismatch was fixed and covered by an explicit date regression test.
+- The fictional manual workflow corrected a $240 draft to $180, consumed one benefit,
+  left six parts in the warehouse and one returned part on the truck, and created a
+  reviewed plumbing follow-up. Exported records survived an API process restart.
 - Ruff passed on the new backend, scripts, and tests. Python compilation passed.
 - Alembic reported no schema changes missing from the frozen initial migration.
 - A logical backup restored into a separate database matched all 17 application

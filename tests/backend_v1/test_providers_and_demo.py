@@ -12,6 +12,18 @@ from operations.integrations.gemini import Gemini
 from scripts.backend_demo import run
 
 
+def test_openapi_exposes_bearer_authorization_for_browser(api):
+    schema = api.client.get("/api/v1/openapi.json").json()
+    assert schema["components"]["securitySchemes"]["HTTPBearer"] == {
+        "type": "http",
+        "scheme": "bearer",
+    }
+    endpoint = schema["paths"]["/api/v1/me"]["get"]
+    assert endpoint["security"] == [{"HTTPBearer": []}]
+    assert all(p["name"].lower() != "authorization" for p in endpoint["parameters"])
+    assert "security" not in schema["paths"]["/health/live"]["get"]
+
+
 def extraction():
     return {
         "equipment_id": "equipment-1",

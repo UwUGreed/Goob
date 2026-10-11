@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI, Header, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer
 from pydantic import Field
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -165,12 +166,12 @@ def create_app(engine=None, verifier=None, gemini=None):
 
     def actor(
         db=Depends(session),
-        authorization: str = Header(default=""),
+        credentials=Depends(HTTPBearer(auto_error=False)),
         x_tenant_id: str = Header(default=""),
     ):
-        if not authorization.startswith("Bearer ") or not x_tenant_id:
+        if credentials is None or not x_tenant_id:
             raise Problem("Bearer authentication and X-Tenant-ID are required.", 401)
-        return identity.actor_for(db, x_tenant_id, verify(authorization[7:]))
+        return identity.actor_for(db, x_tenant_id, verify(credentials.credentials))
 
     def mutate(db, user, key, operation, payload, run):
         result = command(db, user, key, operation, payload, run)
@@ -362,7 +363,7 @@ def create_app(engine=None, verifier=None, gemini=None):
     @app.get(prefix + "/obligations")
     def obligations(as_of: date | None = None, db=Depends(session), user=Depends(actor)):
         check(db, user, "agreements")
-        return agreements.obligations(db, user, as_of or date.today())
+        return agreements.obligations(db, user, as_of or now().date())
 
     @app.get(prefix + "/equipment/{identifier}/history")
     def equipment_history(identifier: str, db=Depends(session), user=Depends(actor)):

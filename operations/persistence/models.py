@@ -141,7 +141,7 @@ class Benefit(Scoped, Base):
     job_id: Mapped[str | None] = mapped_column(String)
     amount: Mapped[int]
     reason: Mapped[str]
-    effective_on: Mapped[date] = mapped_column(Date, default=date.today)
+    effective_on: Mapped[date] = mapped_column(Date, default=lambda: now().date())
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (
         branch_fk(),

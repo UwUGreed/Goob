@@ -3,14 +3,14 @@
 import argparse
 import json
 import os
-from datetime import date, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import httpx
 
 
 def run(call, branch, use_gemini=False):
-    today = date.today()
+    today = datetime.now(UTC).date()
 
     def create(kind, name, data, **links):
         return call(
