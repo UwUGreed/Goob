@@ -339,9 +339,6 @@ def dispatch(db, actor, action):
             reservations = db.scalars(select(Reservation).where(Reservation.tenant_id == actor.tenant, Reservation.job_id == visit.job_id, Reservation.state == "active").with_for_update()).all()
             for r in reservations:
                 inventory.execute(db, actor, {"action": "issue", "sku_id": r.sku_id, "location_id": r.location_id, "job_id": visit.job_id, "reservation_id": r.id, "quantity": r.quantity, "reason": "Completed dispatch work"})
-            pairs = db.execute(select(Movement.sku_id,Movement.location_id).where(Movement.tenant_id==actor.tenant,Movement.job_id==job.id).distinct()).all()
-            for sku_id,location_id in pairs:
-                quantity = inventory.outstanding(db,actor,job.id,sku_id,location_id)
-                if quantity > 0:
-                    inventory.dispose(db,actor,job,{"sku_id":sku_id,"location_id":location_id,"quantity":quantity,"disposition":"installed"})
+            # Completion issues reserved stock. A reviewed technician note determines
+            # whether each part was installed, returned or damaged.
     event(db, actor, tech.branch_id, "dispatch."+kind, tech.id, {"job_id": tech.job_id})

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 export type Row = {id:string; branch_id:string; name:string; revision:number; data:Record<string, any>; parent_id?:string|null; customer_id?:string|null; property_id?:string|null; equipment_id?:string|null};
-export type Agreement = {id:string; branch_id:string; equipment_id:string; trade:string; service:string; status:string; canceled_on:string|null; revision:number; remaining:number};
+export type Agreement = {id:string; branch_id:string; equipment_id:string; trade:string; service:string; status:string; canceled_on:string|null; revision:number; remaining:number;portal_meta?:{planId?:string;planName?:string;paymentStatus?:string}};
 export type Balance = {id:string; sku_id:string; location_id:string; on_hand:number; reserved:number; available:number; minimum:number; target:number; replenish:number};
 export type JobWorkspace = {job:Row; customer:Row; property:Row; equipment:Row; coverage:Record<string, any>; readiness:{state:string;checks:Array<{id:string;state:string;reason?:string;required?:number;reserved_or_issued?:number}>}; notes:Array<Record<string,any>>;proposals:Array<Record<string,any>>;invoices:Array<Record<string,any>>;movements:Array<Record<string,any>>;reservations:Array<Record<string,any>>;events:Array<Record<string,any>>;parts:Row[];stock:Balance[];locations:Row[]};
 
