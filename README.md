@@ -2,6 +2,12 @@
 
 A combined contractor workspace: the React dispatch frontend now includes **Work review**, connected to the Python operations API with Tiger Cloud PostgreSQL support.
 
+The repository also includes the new authenticated operations API and the standalone
+97-table database foundation. They can use the same PostgreSQL database, but retain
+separate records and migration histories. See [the integration guide](docs/backend/DATABASE-INTEGRATION.md)
+for ownership, setup, and verified behavior. The existing frontend continues using its
+current `/api` contract; it has not been switched to `/api/v1`.
+
 ## Run the combined demo
 
 From this folder:
