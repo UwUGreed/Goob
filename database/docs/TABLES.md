@@ -21,7 +21,7 @@ Checks: column checks above.
 
 ## org_branches
 
-Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -38,7 +38,7 @@ Checks: column checks above.
 
 ## org_roles
 
-Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -53,7 +53,7 @@ Checks: column checks above.
 
 ## org_permissions
 
-Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -68,7 +68,7 @@ Checks: column checks above.
 
 ## org_trades
 
-Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -85,7 +85,7 @@ Checks: column checks above.
 
 ## org_modules
 
-Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -102,7 +102,7 @@ Checks: column checks above.
 
 ## crm_customers
 
-Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -119,7 +119,7 @@ Checks: column checks above.
 
 ## crm_contacts
 
-Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -138,7 +138,7 @@ Checks: column checks above.
 
 ## crm_addresses
 
-Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -177,7 +177,7 @@ Checks: column checks above.
 
 ## cat_units
 
-Owner: **cat**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **cat**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -193,7 +193,7 @@ Checks: column checks above.
 
 ## cat_job_types
 
-Owner: **cat**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **cat**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -209,7 +209,7 @@ Checks: column checks above.
 
 ## cat_pricebooks
 
-Owner: **cat**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **cat**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -225,7 +225,7 @@ Checks: column checks above.
 
 ## agree_plans
 
-Owner: **agree**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **agree**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -242,7 +242,7 @@ Checks: column checks above.
 
 ## inv_suppliers
 
-Owner: **inv**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **inv**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -294,7 +294,7 @@ Checks: column checks above.
 
 ## org_role_permissions
 
-Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -310,7 +310,7 @@ Checks: column checks above.
 
 ## org_qualifications
 
-Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -327,7 +327,7 @@ Checks: column checks above.
 
 ## crm_customer_contacts
 
-Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -345,7 +345,7 @@ Checks: column checks above.
 
 ## crm_properties
 
-Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -363,7 +363,7 @@ Checks: column checks above.
 
 ## crm_equipment_types
 
-Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -379,7 +379,7 @@ Checks: column checks above.
 
 ## crm_communication_preferences
 
-Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -399,7 +399,7 @@ Checks: column checks above.
 
 ## cat_materials
 
-Owner: **cat**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **cat**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -417,7 +417,7 @@ Checks: column checks above.
 
 ## cat_services
 
-Owner: **cat**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **cat**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -435,7 +435,7 @@ Checks: column checks above.
 
 ## cat_labor_rates
 
-Owner: **cat**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **cat**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -455,7 +455,7 @@ Checks: `valid_until IS NULL OR valid_until >= valid_from`.
 
 ## agree_plan_versions
 
-Owner: **agree**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **agree**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -476,7 +476,7 @@ Checks: column checks above.
 
 ## integrate_record_mappings
 
-Owner: **integrate**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **integrate**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -494,7 +494,7 @@ Checks: column checks above.
 
 ## integrate_sync_attempts
 
-Owner: **integrate**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **integrate**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -516,7 +516,7 @@ Checks: column checks above.
 
 ## integrate_checkpoints
 
-Owner: **integrate**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **integrate**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -552,7 +552,7 @@ Checks: column checks above.
 
 ## org_member_roles
 
-Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -568,7 +568,7 @@ Checks: column checks above.
 
 ## org_technicians
 
-Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -585,7 +585,7 @@ Checks: column checks above.
 
 ## crm_customer_properties
 
-Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -629,7 +629,7 @@ Checks: `warranty_until IS NULL OR installed_on IS NULL OR warranty_until >= ins
 
 ## cat_price_versions
 
-Owner: **cat**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **cat**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -651,7 +651,7 @@ Checks: `num_nonnulls(material_id,service_id) = 1`; `valid_until IS NULL OR vali
 
 ## cat_checklist_templates
 
-Owner: **cat**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **cat**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -685,7 +685,7 @@ Checks: column checks above.
 
 ## import_batches
 
-Owner: **import**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **import**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -705,7 +705,7 @@ Checks: column checks above.
 
 ## agree_benefit_definitions
 
-Owner: **agree**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **agree**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -755,7 +755,7 @@ Checks: `ends_on >= starts_on`; `interpretation_state <> 'approved' OR (interpre
 
 ## job_jobs
 
-Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -777,7 +777,7 @@ Checks: column checks above.
 
 ## inv_supplier_materials
 
-Owner: **inv**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **inv**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -795,7 +795,7 @@ Checks: column checks above.
 
 ## ai_runs
 
-Owner: **ai**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **ai**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -842,7 +842,7 @@ Checks: `actor_kind <> 'employee' OR actor_id IS NOT NULL`.
 
 ## org_technician_qualifications
 
-Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **org**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -861,7 +861,7 @@ Checks: `valid_until IS NULL OR valid_until >= valid_from`.
 
 ## crm_equipment_history
 
-Owner: **crm**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **crm**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -883,7 +883,7 @@ Checks: `kind <> 'relocated' OR (from_property_id IS NOT NULL AND to_property_id
 
 ## crm_notes
 
-Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **crm**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -903,7 +903,7 @@ Checks: `num_nonnulls(customer_id,property_id,equipment_id) = 1`.
 
 ## cat_checklist_items
 
-Owner: **cat**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **cat**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -921,7 +921,7 @@ Checks: column checks above.
 
 ## import_field_mappings
 
-Owner: **import**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **import**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -940,7 +940,7 @@ Checks: column checks above.
 
 ## import_staging_records
 
-Owner: **import**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **import**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -983,7 +983,7 @@ Checks: `(scope_kind='property' AND equipment_id IS NULL AND trade_id IS NULL) O
 
 ## agree_changes
 
-Owner: **agree**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **agree**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1005,7 +1005,7 @@ Checks: column checks above.
 
 ## job_trades
 
-Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1021,7 +1021,7 @@ Checks: column checks above.
 
 ## job_equipment
 
-Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1037,7 +1037,7 @@ Checks: column checks above.
 
 ## job_tasks
 
-Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1057,7 +1057,7 @@ Checks: column checks above.
 
 ## job_appointments
 
-Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1075,7 +1075,7 @@ Checks: `ends_at > starts_at`.
 
 ## job_availability
 
-Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1094,7 +1094,7 @@ Checks: `ends_at > starts_at`.
 
 ## job_time_entries
 
-Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1114,7 +1114,7 @@ Checks: `ends_at > starts_at`.
 
 ## job_status_history
 
-Owner: **job**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **job**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1134,7 +1134,7 @@ Checks: column checks above.
 
 ## job_return_links
 
-Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1151,7 +1151,7 @@ Checks: `original_job_id <> return_job_id`.
 
 ## job_required_materials
 
-Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1168,7 +1168,7 @@ Checks: column checks above.
 
 ## job_readiness_checks
 
-Owner: **job**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **job**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1189,7 +1189,7 @@ Checks: column checks above.
 
 ## inv_locations
 
-Owner: **inv**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **inv**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1209,7 +1209,7 @@ Checks: column checks above.
 
 ## bill_quotes
 
-Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1230,7 +1230,7 @@ Checks: column checks above.
 
 ## bill_membership_schedules
 
-Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1251,7 +1251,7 @@ Checks: `period_end >= period_start`.
 
 ## ai_extracted_terms
 
-Owner: **ai**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **ai**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1272,7 +1272,7 @@ Checks: column checks above.
 
 ## ai_change_sets
 
-Owner: **ai**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **ai**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1290,7 +1290,7 @@ Checks: column checks above.
 
 ## follow_tasks
 
-Owner: **follow**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **follow**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1311,7 +1311,7 @@ Checks: column checks above.
 
 ## import_validation_issues
 
-Owner: **import**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **import**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1349,7 +1349,7 @@ Checks: column checks above.
 
 ## import_decisions
 
-Owner: **import**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **import**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1368,7 +1368,7 @@ Checks: column checks above.
 
 ## agree_benefit_accounts
 
-Owner: **agree**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **agree**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1388,7 +1388,7 @@ Checks: `period_end >= period_start`.
 
 ## job_assignments
 
-Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **job**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1404,7 +1404,7 @@ Checks: column checks above.
 
 ## job_confirmed_work
 
-Owner: **job**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **job**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1443,7 +1443,7 @@ Checks: column checks above.
 
 ## bill_quote_lines
 
-Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1473,7 +1473,7 @@ Checks: `discount_amount <= round(quantity*unit_price,2)`; `tax_amount = round((
 
 ## bill_accepted_scopes
 
-Owner: **bill**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **bill**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1516,7 +1516,7 @@ Checks: column checks above.
 
 ## ai_decisions
 
-Owner: **ai**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **ai**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1535,7 +1535,7 @@ Checks: column checks above.
 
 ## follow_message_drafts
 
-Owner: **follow**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **follow**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1557,7 +1557,7 @@ Checks: `status <> 'approved' OR approved_by IS NOT NULL`.
 
 ## import_outcomes
 
-Owner: **import**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **import**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1578,7 +1578,7 @@ Checks: column checks above.
 
 ## job_work_evidence
 
-Owner: **job**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **job**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1595,7 +1595,7 @@ Checks: column checks above.
 
 ## agree_benefit_ledger
 
-Owner: **agree**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **agree**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1620,7 +1620,7 @@ Checks: `(kind='grant' AND quantity>0) OR (kind IN ('consumption','expiration') 
 
 ## agree_planned_visits
 
-Owner: **agree**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **agree**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1671,7 +1671,7 @@ Checks: `num_nonnulls(from_account_id,to_account_id) >= 1`; `from_account_id IS 
 
 ## inv_replenishment_policies
 
-Owner: **inv**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **inv**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1689,7 +1689,7 @@ Checks: column checks above.
 
 ## bill_invoices
 
-Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1714,7 +1714,7 @@ Checks: `total = subtotal-discount_total+tax_total`.
 
 ## ai_execution_outcomes
 
-Owner: **ai**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **ai**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1736,7 +1736,7 @@ Checks: column checks above.
 
 ## follow_delivery_attempts
 
-Owner: **follow**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **follow**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1757,7 +1757,7 @@ Checks: column checks above.
 
 ## agree_benefit_reservations
 
-Owner: **agree**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **agree**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1780,7 +1780,7 @@ Checks: `(status='active' AND resolved_at IS NULL) OR (status<>'active' AND reso
 
 ## inv_reservations
 
-Owner: **inv**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **inv**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1803,7 +1803,7 @@ Checks: `(status='active' AND resolved_at IS NULL) OR (status<>'active' AND reso
 
 ## bill_invoice_lines
 
-Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1835,7 +1835,7 @@ Checks: `discount_amount <= round(quantity*unit_price,2)`; `tax_amount = round((
 
 ## bill_issued_snapshots
 
-Owner: **bill**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **bill**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1880,7 +1880,7 @@ Checks: column checks above.
 
 ## bill_review_flags
 
-Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion. 
+Owner: **bill**. PK: `organization_id,id`. Mutable operational record; FK-restricted deletion.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|
@@ -1904,7 +1904,7 @@ Checks: `status = 'open' OR (resolution IS NOT NULL AND resolved_at IS NOT NULL 
 
 ## bill_corrections
 
-Owner: **bill**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE. 
+Owner: **bill**. PK: `organization_id,id`. Append-only; a trigger rejects UPDATE/DELETE.
 
 | Column | SQL type/default/nullability | Reference |
 |---|---|---|

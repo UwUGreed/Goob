@@ -61,7 +61,7 @@ def render():
        'These views calculate from records and are never seeded. Additional integrity triggers '
        'and view definitions are in migrations 002 and 003; see INTEGRITY.md for their contracts.']
     erd += ['```', '']
-    return '\n\n'.join(sql)+'\n', '\n'.join(dictionary), '\n'.join(erd)
+    return '\n\n'.join(sql)+'\n', '\n'.join(line.rstrip() for line in dictionary), '\n'.join(erd)
 
 
 def main():
