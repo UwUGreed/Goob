@@ -24,7 +24,7 @@ rollback() {
             if sudo /usr/bin/systemctl restart tiger.service; then
                 restored=false
                 for retry in {1..10}; do
-                    if curl --fail --silent --max-time 3 http://127.0.0.1:8081/api/health >/dev/null; then
+                    if curl --fail --silent --max-time 3 http://127.0.0.1:8081/health/ready >/dev/null; then
                         restored=true
                         break
                     fi
@@ -57,7 +57,7 @@ mv -Tf "$base/current.next" "$base/current"
 switched=true
 sudo /usr/bin/systemctl restart tiger.service
 for attempt in {1..20}; do
-    if curl --fail --silent --max-time 3 http://127.0.0.1:8081/api/health >/dev/null && \
+    if curl --fail --silent --max-time 3 http://127.0.0.1:8081/health/ready >/dev/null && \
        curl --fail --silent --max-time 3 http://127.0.0.1:8081/ | grep -q '<div id="root">'; then
         echo "Release $sha is healthy. Previous release retained: $previous"
         exit 0

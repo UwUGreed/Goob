@@ -2,6 +2,11 @@
 
 ## Temporary hackathon deployment
 
+The staging service now runs `operations.portal_server:application` with Uvicorn
+on loopback port 8081, serving the latest portal and its authenticated API together.
+Deployment and rollback probes use `/health/ready` to verify the portal schema.
+The legacy `operations.server` is no longer the staging entrypoint.
+
 The temporary HTTPS address is https://45.76.253.215.sslip.io, with the staging
 password gate retained. For this short-lived demo, `/etc/tiger/tiger.env` uses
 `GOOB_ENV=hackathon`, `GOOB_HACKATHON_UNVERIFIED_TLS=1`, and both database URLs
