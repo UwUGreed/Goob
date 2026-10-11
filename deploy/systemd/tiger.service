@@ -9,6 +9,7 @@ Group=tiger
 WorkingDirectory=/var/www/tiger/current
 EnvironmentFile=/etc/tiger/tiger.env
 Environment=PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+Environment=HOME=/var/www/tiger
 ExecStart=/var/www/tiger/current/.venv/bin/python -m operations.server
 Restart=on-failure
 RestartSec=3
