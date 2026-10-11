@@ -19,7 +19,7 @@ export async function api<T>(path:string, body?:unknown, method?:'POST'|'PATCH')
 export function useResource<T>(path:string){
   const [data,setData]=useState<T|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState('');
   const reload=useCallback(async()=>{setLoading(true);try{setData(await api<T>(path));setError('');}catch(e){setError(e instanceof Error?e.message:'Could not load records.');}finally{setLoading(false);}},[path]);
-  useEffect(()=>{void reload();},[reload]);
+  useEffect(()=>{void reload();window.addEventListener('goob-records-changed',reload);return()=>window.removeEventListener('goob-records-changed',reload);},[reload]);
   return {data,loading,error,reload};
 }
 

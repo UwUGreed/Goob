@@ -13,10 +13,10 @@ export function Expansion({page,go,state,dispatch}:{page:string;go:(path:string)
   if(me.loading)return <section className="expansion-page" role="status">Loading workspace access…</section>;
   if(me.error||!me.data?.branches.length)return <section className="expansion-page" role="alert">{me.error||'No branch is available for this account.'}</section>;
   const branchId=me.data.branches[0];
-  if(page==='growth')return <Growth branchId={branchId} go={go}/>;
+  if(page==='growth')return <Growth branchId={branchId} go={go} state={state}/>;
   if(page==='memberships')return <Coverage branchId={branchId} initialId={window.location.pathname.split('/')[2]||''} state={state} dispatch={dispatch}/>;
-  if(page==='stock-ledger')return <StockLedger branchId={branchId} go={go}/>;
-  if(page==='work-review')return <JobReview go={go}/>;
+  if(page==='stock-ledger')return <StockLedger branchId={branchId} go={go} state={state}/>;
+  if(page==='work-review')return <JobReview go={go} state={state}/>;
   if(page==='migration')return <Migrations branchId={branchId}/>;
   return <section className="expansion-page">Page not found.</section>;
 }
