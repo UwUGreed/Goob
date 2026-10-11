@@ -11,6 +11,21 @@ export function useDispatchController(selection:Selection,realMap:boolean){
   const [config,setConfig]=useState<IntegrationConfig>(disconnectedConfig),[configLoaded,setConfigLoaded]=useState(false),[ready,setReady]=useState(false),[pending,setPending]=useState(false),[error,setError]=useState('');
   const locked=useRef(false),arrivals=useRef(new Set<string>()),arrivalRequests=useRef(new Map<string,Promise<boolean>>()),alive=useRef(true);
   useEffect(()=>{alive.current=true;api<IntegrationConfig>('/api/config').then(async c=>{if(!alive.current)return;setConfig(c);setConfigLoaded(true);if(!c.authenticated)throw new Error('Sign in to open database records.');const saved=await api<{state:Simulation}>('/api/dispatch');const hydrated={...saved.state,technicians:{...saved.state.technicians}};for(const [id,t] of Object.entries(hydrated.technicians)){const visit=allJobs(hydrated).find(j=>j.id===t.jobId);const destination=t.status==='Returning'?depot:visit?.node;if(destination&&realStops[t.node]&&realStops[destination]&&['Assigned','En route','Returning'].includes(t.status)){const route=findRoute(t.node,destination);hydrated.technicians[id]={...t,route,duration:Math.max(10,routeLength(route)/20),running:false};}}local({type:'replace',state:hydrated});if(alive.current)setReady(true);}).catch(e=>{if(alive.current){setConfigLoaded(true);setError(e.message);}});return()=>{alive.current=false;};},[]);
+  useEffect(()=>{
+    let request=0;
+    const refresh=()=>{
+      if(!ready)return;
+      const number=++request;
+      api<{state:Simulation}>('/api/dispatch').then(saved=>{
+        if(!alive.current||number!==request)return;
+        const current=motion.getState();
+        local({type:'replace',state:{...saved.state,technicians:Object.fromEntries(Object.entries(saved.state.technicians).map(([id,t])=>[id,current.technicians[id]?.status===t.status&&current.technicians[id]?.jobId===t.jobId?current.technicians[id]:t])),speed:current.speed}});
+      }).catch(e=>{if(alive.current&&number===request)setError(e.message);});
+    };
+    const events=['goob-records-changed','goob-navigation','focus'];
+    events.forEach(event=>window.addEventListener(event,refresh));
+    return()=>{request++;events.forEach(event=>window.removeEventListener(event,refresh));};
+  },[ready]);
   const [selectionError,setSelectionError]=useState(''),[selectionLoading,setSelectionLoading]=useState(false);
   const selectedId=selection?.type==='job'?selection.id:'';
   const present=!!selectedId&&allJobs(state).some(j=>j.id===selectedId);

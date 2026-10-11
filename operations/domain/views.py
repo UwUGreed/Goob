@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from operations.domain.common import Problem
 from operations.persistence.models import ViewPreference
 
-PAGES = {"overview", "dispatch", "customers", "jobs", "inventory", "memberships", "invoices"}
+PAGES = {"overview", "dispatch", "customers", "jobs", "inventory", "memberships", "invoices", "growth", "stock-ledger", "work-review", "migration"}
 SECTIONS = {"inventory": {"summary", "attention", "ledger"}, "overview": {"summary"}, "dispatch": {"simulation"}}
 class Appearance(BaseModel):
     model_config = ConfigDict(extra="forbid")

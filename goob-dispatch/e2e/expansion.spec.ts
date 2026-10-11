@@ -13,7 +13,8 @@ test('portal exposes growth, coverage, stock, review and migration workflows',as
   await page.route('**/api/**',async route=>{
     const request=route.request(),path=new URL(request.url()).pathname;calls.push(`${request.method()} ${path}`);
     let payload:unknown=[];
-    if(path==='/api/auth/session')payload={identifier:'demo',workspace:'Columbia demo',role:'owner',demo:true};
+    if(path==='/api/auth/session')payload={identifier:'demo',workspace:'Columbia demo',role:'owner',tenant:'test-tenant',userId:'test-owner',demo:true};
+    else if(path==='/api/v1/workspace-views')payload={views:[],teamDefault:null,activeViewId:null};
     else if(path==='/api/config')payload={authenticated:true,localDemo:false,browserKey:'',mapId:'',routes:false,voice:false};
     else if(path==='/api/dispatch')payload={state:empty};
     else if(path==='/api/v1/me')payload={branches:['a'],role:'owner'};
@@ -41,7 +42,9 @@ test('portal exposes growth, coverage, stock, review and migration workflows',as
     await page.goto('/'+path);await expect(page.getByRole('heading',{name:heading,exact:true})).toBeVisible();
   }
   await page.getByRole('button',{name:'Growth',exact:true}).click();await expect(page).toHaveURL(/\/growth$/);
-  await page.goto('/memberships');await page.getByRole('combobox',{name:'Equipment'}).selectOption('unit-1');await page.getByRole('textbox',{name:'Coverage description'}).fill('Annual service');await page.getByLabel('Ends').fill('2027-10-11');await page.getByRole('button',{name:'Create agreement'}).click();await expect(page.getByRole('status')).toContainText('Agreement recorded');expect(calls).toContain('POST /api/v1/agreements');
+  await page.goto('/memberships');await page.getByRole('combobox',{name:'Equipment',exact:true}).selectOption('unit-1');await page.getByRole('textbox',{name:'Coverage description'}).fill('Annual service');await page.getByLabel('Ends').fill('2027-10-11');await page.getByRole('button',{name:'Create agreement'}).click();await expect(page.getByRole('status')).toContainText('Agreement recorded');expect(calls).toContain('POST /api/v1/agreements');
+  await page.getByRole('textbox',{name:'Plan name'}).fill('Home service care');await page.getByRole('button',{name:'Create plan'}).click();await expect(page.getByText('Service plan created.')).toBeVisible();expect(calls).toContain('POST /api/dispatch');
+  await page.screenshot({path:'test-results/coverage-restored.png',fullPage:true});
   await page.goto('/stock-ledger');await page.getByRole('combobox',{name:'Part',exact:true}).selectOption('part-1');await page.getByRole('combobox',{name:'From / at location'}).selectOption('location-1');await page.getByRole('textbox',{name:'Reason'}).fill('Received supplier shipment');await page.getByRole('button',{name:'Confirm receive'}).click();await expect(page.getByRole('status')).toContainText('Receive recorded');expect(calls).toContain('POST /api/v1/inventory/commands');
   await page.goto('/migration');await page.getByRole('textbox',{name:'CSV contents'}).fill('source_id,kind,name,data\nc1,customers,Imported customer,"{""email"":"""",""phone"":""""}"');await page.getByRole('button',{name:'Stage for review'}).click();await expect(page.getByRole('status')).toContainText('Import staged');expect(calls).toContain('POST /api/v1/imports/csv');
   await page.goto('/work-review');await page.getByRole('combobox',{name:'Job'}).selectOption('job-1');await expect(page.getByText('Service visit',{exact:true})).toBeVisible();

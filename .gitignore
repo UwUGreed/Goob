@@ -39,3 +39,7 @@ backups/
 *.dump
 *.tar.gz
 *.htpasswd
+
+# Browser verification artifacts
+/test-results/
+/playwright-report/

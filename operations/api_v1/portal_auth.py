@@ -62,7 +62,7 @@ class Login(BaseModel):
 
 def register_auth(app, factory):
     def profile(db, user, actor):
-        return {"identifier": user.identifier, "tenant": actor.tenant, "workspace": db.get(Tenant, actor.tenant).name, "role": actor.role, "demo": user.demo}
+        return {"identifier": user.identifier, "userId": user.id, "tenant": actor.tenant, "workspace": db.get(Tenant, actor.tenant).name, "role": actor.role, "demo": user.demo}
 
     @app.get("/api/auth/session")
     def session(request: Request):

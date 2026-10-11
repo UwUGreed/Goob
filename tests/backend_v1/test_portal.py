@@ -61,6 +61,19 @@ def test_cloud_portal_login_crud_assignment_stock_and_signout(api, engine):
     assert state["jobs"][job_id]=="Completed"
     assert next(i for i in state["stock"] if i["id"]==item["id"])["quantity"]==2
     assert state["reservations"]==[]
+    assert any(m["kind"]=="issue" for m in client.get(f"/api/v1/jobs/{job_id}/workspace").json()["movements"])
+    assert not any(m["kind"]=="installed" for m in client.get(f"/api/v1/jobs/{job_id}/workspace").json()["movements"])
+    record=client.get(f"/api/v1/records/jobs/{job_id}").json()
+    billing_line={"description":"Installed valve","kind":"material","sku_id":item["skuId"],"quantity":1,"unit_cents":1000,"treatment":"billable","discount_eligible":False}
+    updated=client.patch(f"/api/v1/records/jobs/{job_id}",json={"expected_revision":record["revision"],"data":record["data"]|{"billing_mode":"nonmember","customer_approved":True,"lines":[billing_line]}},headers={"Idempotency-Key":str(uuid4())})
+    assert updated.status_code==200,updated.text
+    note="Installed one Valve during the visit."
+    proposal=client.post(f"/api/v1/jobs/{job_id}/proposals",json={"note":note,"expected_job_revision":updated.json()["revision"],"extraction":{"equipment_id":record["equipment_id"],"completed_work":"Replaced valve","completed":True,"materials":[{"sku_id":item["skuId"],"location_id":item["locationId"],"quantity":1,"disposition":"installed","source_quote":"Installed one Valve"}],"followups":[],"unknowns":[]}},headers={"Idempotency-Key":str(uuid4())})
+    assert proposal.status_code==201,proposal.text
+    reviewed=client.post(f"/api/v1/proposals/{proposal.json()['id']}/review",json={"action":"approve","expected_revision":proposal.json()["revision"],"reason":"Technician note and part movement reviewed","dismissed_findings":{}},headers={"Idempotency-Key":str(uuid4())})
+    assert reviewed.status_code==200,reviewed.text
+    assert reviewed.json()["state"]=="approved"
+    assert client.get(f"/api/v1/jobs/{job_id}/history").json()["invoices"]
     assert client.get("/api/dispatch").json()["state"]["jobs"][job_id]=="Completed"
     assert client.post("/api/dispatch",json={"type":"complete","techId":"maya"},headers={"Origin":"https://evil.example"}).status_code==403
     token=dict(client.cookies)

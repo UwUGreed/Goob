@@ -10,6 +10,8 @@ GRANT SELECT, INSERT ON
   terms_v1, benefits_v1, movements_v1, notes_v1, events_v1, commands_v1
   TO :"app_role";
 GRANT SELECT ON alembic_version TO :"app_role";
+GRANT SELECT, INSERT, UPDATE, DELETE ON
+  workspace_views_v1, workspace_selections_v1 TO :"app_role";
 REVOKE UPDATE, DELETE ON
   terms_v1, benefits_v1, movements_v1, notes_v1, events_v1, commands_v1
   FROM :"app_role";
